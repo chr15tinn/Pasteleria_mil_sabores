@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="assets/filters.css">
+
+</head>
+<body>
+<h1 class="titulo">Pasteleria Mil Sabores</h1>
+<nav class="navbar navbar-expand-lg bg-custom">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="pasteleria.html">
+      
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-house-heart-fill" viewBox="0 0 16 16">
+      <path d="M7.293 1.5a1 1 0 0 1 1.414 0L11 3.793V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v3.293l2.354 2.353a.5.5 0 0 1-.708.707L8 2.207 1.354 8.853a.5.5 0 1 1-.708-.707z"/>
+      <path d="m14 9.293-6-6-6 6V13.5A1.5 1.5 0 0 0 3.5 15h9a1.5 1.5 0 0 0 1.5-1.5zm-6-.811c1.664-1.673 5.825 1.254 0 5.018-5.825-3.764-1.664-6.691 0-5.018"/>
+    </svg>
+      
+    Inicio</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNavDropdown">
+      <ul class="navbar-nav">
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Productos
+          </a>
+          <ul class="dropdown-menu" id="menuCategorias">
+            <li><a class="dropdown-item categoria-item" data-cat="all" href="#">Todas</a></li>
+            <li><a class="dropdown-item" href="pasteleria.html">Tortas Cuadradas</a></li>
+            <li><a class="dropdown-item" href="pasteleria.html">Tortas Circulares</a></li>
+            <li><a class="dropdown-item" href="pasteleria.html">Postres Individuales</a></li>
+            <li><a class="dropdown-item" href="pasteleria.html">Productos Sin Azúcar</a></li>
+            <li><a class="dropdown-item" href="pasteleria.html">Pastelería Tradicional</a></li>
+            <li><a class="dropdown-item" href="pasteleria.html">Productos sin gluten</a></li>
+            <li><a class="dropdown-item" href="pasteleria.html">Productos Vegana</a></li>
+            <li><a class="dropdown-item" href="pasteleria.html">Tortas Especiales</a></li>
+          </ul>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Mis Pedidos</a>
+        </li> 
+        <li class="nav-item">
+          <a class="nav-link" href="#">Nosotros</a>
+        </li>
+        <li class="nav-item">
+        <a class="nav-link btn btn-outline-primary" href="registro.html">Registro</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="login.html">Iniciar Sesión</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="Button-carrito m-3">
+  <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="currentColor" class="bi bi-basket-fill" viewBox="0 0 16 16">
+    <path d="M5.071 1.243a.5.5 0 0 1 .858.514L3.383 6h9.234L10.07 1.757a.5.5 0 1 1 .858-.514L13.783 6H15.5a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H15v5a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V9H.5a.5.5 0 0 1-.5-.5v-2A.5.5 0 0 1 .5 6h1.717zM3.5 10.5a.5.5 0 1 0-1 0v3a.5.5 0 0 0 1 0zm2.5 0a.5.5 0 1 0-1 0v3a.5.5 0 0 0 1 0zm2.5 0a.5.5 0 1 0-1 0v3a.5.5 0 0 0 1 0zm2.5 0a.5.5 0 1 0-1 0v3a.5.5 0 0 0 1 0zm2.5 0a.5.5 0 1 0-1 0v3a.5.5 0 0 0 1 0z"/>
+  </svg>
+</div>
+    <h1 class="Registrotitulo">Registro</h1>
+
+<div class="d-flex justify-content-center" style="width: 50%; margin: auto; padding-top: 50px;">
+    <form class="row g-3 needs-validation" novalidate id="miFormulario">
+    <div class="col-md-4 position-relative">
+        <label for="validationTooltip01" class="form-label">Nombre</label>
+        <input type="text" class="form-control" id="validationTooltip01" value="" required>
+        <div class="valid-tooltip">
+        Looks good!
+        </div>
+    </div>
+    <div class="col-md-4 position-relative">
+        <label for="validationTooltip02" class="form-label">Apellido</label>
+        <input type="text" class="form-control" id="validationTooltip02" value="" required>
+        <div class="valid-tooltip">
+        Looks good!
+        </div>
+    </div>
+    <div class="col-md-4 position-relative">
+        <label for="validationTooltipUsername" class="form-label">Usuario</label>
+        <div class="input-group has-validation">
+        <span class="input-group-text" id="validationTooltipUsernamePrepend">@</span>
+        <input type="text" class="form-control" id="validationTooltipUsername" aria-describedby="validationTooltipUsernamePrepend" required>
+        <div class="invalid-tooltip">
+            Porfavor ingrese un usuario válido.
+        </div>
+        </div>
+    </div>
+    <!-- Fecha de nacimiento -->
+    <div class="col-md-4 position-relative">
+        <label for="fechaNacInput" class="form-label">Fecha de nacimiento</label>
+        <input type="date" class="form-control" id="fechaNacInput" required>
+        <div class="invalid-tooltip">Ingresa tu fecha de nacimiento.</div>
+    </div>
+
+    <!-- Código promocional (opcional) -->
+    <div class="col-md-4 position-relative">
+        <label for="codigoPromoInput" class="form-label">Código promocional</label>
+        <input type="text" class="form-control" id="codigoPromoInput" placeholder="FELICES50">
+        <div class="valid-tooltip">Código válido (opcional).</div>
+    </div>
+
+    <div class="col-md-6 position-relative">
+        <label for="validationTooltip03" class="form-label">Correo Electronico</label>
+        <input type="text" class="form-control" id="emailInput" required>
+        <div class="invalid-tooltip">
+        Porfavor ingrese un correo válido.
+        </div>
+    <div class="col-md-4 position-relative">
+        <label for="validationTooltip02" class="form-label">Contraseña</label>
+        <input type="text" class="form-control" id="contrasenaInput" value="" required>
+        <div class="valid-tooltip">
+        Looks good!
+        </div>
+    </div>
+
+          <div class="col-md-3 position-relative" style="width: auto;">
+        <label for="validationTooltip04" class="form-label">Region</label>
+        <select class="form-select" id="validationTooltip04" required>
+        <option selected disabled value="">Seleccione Region</option>
+        <option value="1">Región de Arica y Parinacota</option>
+        <option value="2">Región de Tarapacá </option>
+        <option value="3">Región de Antofagasta</option>
+        <option value="4">Región de Atacama</option>
+        <option value="5">Región de Coquimbo</option>
+        <option value="6">Región de Valparaíso</option>
+        <option value="7">Región Metropolitana de Santiago</option>
+        <option value="8">Región del Libertador General Bernardo O'Higgins</option>
+        <option value="9">Región del Maule</option>
+        <option value="10">Región de Ñuble</option>
+        <option value="11">Región del Biobío</option>
+        <option value="12">Región de La Araucanía</option>
+        <option value="13">Región de Los Ríos</option>
+        <option value="14">Región de Los Lagos</option>
+        <option value="15">Región de Aysén del General Carlos Ibáñez del Campo</option>
+        <option value="16">Región de Magallanes y la Antártica Chilena</option>
+    
+        </option>
+        </select>
+        <div class="invalid-tooltip">
+        Porfavor seleccione una region.
+        </div>
+
+       <div class="col-md-6 position-relative">
+        <label for="validationTooltip03" class="form-label">Ciudad</label>
+        <input type="text" class="form-control" id="ciudadInput" required>
+        <div class="invalid-tooltip">
+        Porfavor ingrese una ciudad válida.
+        </div>
+    </div>
+  
+    </div>
+    <div class="col-md-3 position-relative">
+        <label for="validationTooltip05" class="form-label">Codigo Postal</label>
+        <input type="text" class="form-control" id="validationTooltip05" required>
+        <div class="invalid-tooltip">
+        Porfavor ingrese Codigo Postal Válido.
+        </div>
+    </div>
+    <div class="col-12">
+        <button class="btn btn-primary" type="submit"  style="background-color: #5d4037; border-color: #5d4037;" >Enviar</button>
+    </div>
+    </form>
+</div>
+
+
+
+
+
+<script>
+(function () {
+  const form = document.getElementById('miFormulario');
+
+  function getSelectedText(selectEl) {
+    const opt = selectEl.options[selectEl.selectedIndex];
+    return opt ? opt.text : '';
+  }
+
+  function cargarUsuarios() {
+    try {
+      const data = localStorage.getItem('usuarios');
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      console.error('Error leyendo localStorage:', e);
+      return [];
+    }
+  }
+
+  function guardarUsuarios(arr) {
+    localStorage.setItem('usuarios', JSON.stringify(arr));
+  }
+
+  function calcularEdad(fechaISO) {
+    const hoy = new Date();
+    const fn = new Date(fechaISO);
+    let edad = hoy.getFullYear() - fn.getFullYear();
+    const m = hoy.getMonth() - fn.getMonth();
+    if (m < 0 || (m === 0 && hoy.getDate() < fn.getDate())) edad--;
+    return edad;
+  }
+
+  function esCorreoDuoc(correo) {
+    return /@(?:duoc|duocuc)\.cl$/i.test(correo.trim());
+  }
+
+  function esCumpleHoy(fechaISO) {
+    const hoy = new Date();
+    const fn = new Date(fechaISO);
+    return (hoy.getMonth() === fn.getMonth() && hoy.getDate() === fn.getDate());
+  }
+
+  // (Opcional) Hash de contraseña con SHA-256 (requiere usar await/then)
+  // async function hashSHA256(text) {
+  //   const enc = new TextEncoder().encode(text);
+  //   const buf = await crypto.subtle.digest('SHA-256', enc);
+  //   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  // }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    form.classList.add('was-validated');
+    if (!form.checkValidity()) return;
+
+    // Valores base
+    const nombre = document.getElementById('validationTooltip01').value.trim();
+    const apellido = document.getElementById('validationTooltip02').value.trim();
+    const usuario = document.getElementById('validationTooltipUsername').value.trim();
+    const correo = document.getElementById('emailInput').value.trim();
+    const regionSelect = document.getElementById('validationTooltip04');
+    const regionValor = regionSelect.value;
+    const regionTexto = getSelectedText(regionSelect);
+    const ciudad = document.getElementById('ciudadInput').value.trim();
+    const codigoPostal = document.getElementById('validationTooltip05').value.trim();
+
+    const fechaNac = document.getElementById('fechaNacInput').value;
+    const codigoPromo = (document.getElementById('codigoPromoInput').value || '').trim();
+    const contrasena = document.getElementById('contrasenaInput').value; // <— NUEVO
+
+    // Validación correo
+    const regexCorreo = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regexCorreo.test(correo)) {
+      alert('Por favor, ingresa un correo válido.');
+      return;
+    }
+
+    // Validación contraseña básica
+    if (contrasena.length < 6) {
+      alert('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+
+    // Evitar duplicados (por correo o usuario)
+    const usuarios = cargarUsuarios();
+    const existe = usuarios.find(u =>
+      u.correo.toLowerCase() === correo.toLowerCase() || u.usuario.toLowerCase() === usuario.toLowerCase()
+    );
+    if (existe) {
+      alert('Ya existe una cuenta con ese correo o usuario. Intenta con otros datos.');
+      return;
+    }
+
+    // ---- LÓGICA DE BENEFICIOS ----
+    const edad = calcularEdad(fechaNac);
+    let descuento = 0;
+    let motivoDescuento = null;
+
+    if (edad >= 50) {
+      descuento = 50;
+      motivoDescuento = 'Descuento 50% por ser mayor de 50 años';
+    }
+
+    if (descuento === 0 && codigoPromo.toUpperCase() === 'FELICES50') {
+      descuento = 10;
+      motivoDescuento = 'Descuento 10% de por vida con código FELICES50';
+    }
+
+    const correoEsDuoc = esCorreoDuoc(correo);
+    const cumpleHoy = esCumpleHoy(fechaNac);
+
+    const beneficios = {
+      descuentoAplicable: descuento,
+      motivoDescuento: motivoDescuento,
+      esEstudianteDuoc: correoEsDuoc,
+      tortaGratis: correoEsDuoc && cumpleHoy,
+      mensajeTorta: correoEsDuoc
+        ? (cumpleHoy
+            ? '¡Torta gratis hoy por tu cumpleaños (correo Duoc verificado)!'
+            : 'Torta gratis el día de tu cumpleaños (correo Duoc verificado).')
+        : null
+    };
+
+    // Si quisieras guardar la contraseña hasheada:
+    // hashSHA256(contrasena).then(hash => { ...guardar usando hash... });
+
+    // ---- Construir objeto de usuario ----
+    const nuevoUsuario = {
+      nombre,
+      apellido,
+      usuario,
+      correo,
+      region: { id: regionValor, nombre: regionTexto },
+      ciudad,
+      codigoPostal,
+      fechaNacimiento: fechaNac,
+      codigoPromocional: codigoPromo || null,
+      // ⚠️ Para demo académica guardamos la contraseña en claro:
+      contrasena,
+      beneficios,
+      fechaRegistro: new Date().toISOString()
+    };
+
+    // Guardar
+    usuarios.push(nuevoUsuario);
+    guardarUsuarios(usuarios);
+
+    // Guardar usuario actual para mostrar en index
+    localStorage.setItem('usuarioActual', JSON.stringify(nuevoUsuario));
+
+    // Feedback
+    let resumen = `¡Registro guardado!\n\n`;
+    if (beneficios.descuentoAplicable > 0) {
+      resumen += `✔ ${beneficios.motivoDescuento}\n`;
+    }
+    if (beneficios.esEstudianteDuoc) {
+      resumen += `✔ Correo institucional Duoc detectado.\n`;
+      resumen += `✔ ${beneficios.mensajeTorta}\n`;
+    }
+    alert(resumen);
+
+    // 👉 Redirigir a la página principal (ajusta si tu ruta es distinta)
+    window.location.href = "pasteleria.html";
+  });
+
+})();
+</script>
+
+
+</body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Pacifico&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap');
+
+.titulo{
+  font-family: "Pacifico", cursive;
+  font-weight: 400;
+  font-style: normal;
+  text-align: center;
+  color: #5d4037;
+}
+
+.Principal{
+  font-family: "Pacifico", cursive;
+  font-weight: 400;
+  font-style: normal;
+  text-align: left;
+  color: #5d4037;
+}
+body{
+    background-color: #FFF5E1;
+}
+
+.bg-custom {
+    background-color: #FFF5E1 !important;
+  }
+
+.navbar-brand{
+
+  color: #5d4037;
+
+}
+.col-md-8{
+      background-color: #FFF5E1;
+}
+
+.Button-carrito{
+
+  text-align: right;
+  color: #5d4037;
+
+
+}
+
+.Button-help{
+
+  text-align: end;
+  color: #5d4037;
+}
+
+.footer{
+  text-align: end, center;
+  color: #5d4037;
+}
+
+.row-g-0{
+  background-color: #FFF5E1;
+  display: flex;
+}
+.card-text{
+  font-family: 'Lato', sans-serif;
+  font-weight: 21%;
+  font-style: normal;
+  color: #5d4037;
+}
+
+.cards{
+  display: flex;
+  flex-wrap: wrap;    /* se apilan si no cabe */
+  gap: 0.9rem;       /* espacio entre tarjetas */
+}
+
+.card-img-top{
+  width:100%;
+  aspect-ratio:4/3;                  /* o 1/1 si las quieres cuadradas */
+  object-fit:cover;
+}
+.precio {
+  color: #5D4037; /* Marrón chocolate */
+  font-size: 1rem;
+  margin-top: 5px;
+}
+
+.precio {
+  color: #5D4037;
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.Registrotitulo{
+  font-family: "Pacifico", cursive;
+  font-weight: 400;
+  font-style: normal;
+  text-align: center;
+  color: #5d4037;
+  padding-top: 20px;
+}
+
+.nuestratienda{
+  font-family: "Pacifico", cursive;
+  font-weight: 400;
+  font-style: normal;
+  text-align: left;
+  color: #5d4037;
+}
+
+.Pagos {
+  font-family: "Pacifico", cursive;
+  font-weight: 400;
+  font-style: normal;
+  text-align: center;
+  color: #5d4037;
+}
+
