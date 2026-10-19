@@ -86,15 +86,35 @@ function isBirthdayToday(
   )
 }
 
-
 function isDuocEmail(email) {
 
   const normalized =
     email.toLowerCase().trim()
 
   return (
+    normalized.endsWith('@duocuc.cl') ||
     normalized.endsWith('@duoc.cl') ||
-    normalized.endsWith('@duocuc.cl')
+    normalized.endsWith('@profesor.duocuc.cl') ||
+    normalized.endsWith('@profesor.duoc.cl')
+  )
+}
+
+
+function isAllowedEmailDomain(email) {
+
+  const normalized =
+    email.toLowerCase().trim()
+
+  const allowedDomains = [
+    '@duocuc.cl',
+    '@duoc.cl',
+    '@profesor.duocuc.cl',
+    '@profesor.duoc.cl'
+  ]
+
+  return allowedDomains.some(
+    domain =>
+      normalized.endsWith(domain)
   )
 }
 
@@ -109,6 +129,19 @@ function register(data) {
         user.email.toLowerCase() ===
         data.email.toLowerCase()
     )
+
+      if (
+    !isAllowedEmailDomain(
+      data.email
+    )
+  ) {
+
+    return {
+      success: false,
+      message:
+        'Solo se permiten correos institucionales Duoc.'
+    }
+  }
 
   if (existingUser) {
 
@@ -152,7 +185,7 @@ function register(data) {
 
     discount = 10
     discountReason =
-      'Código promocional FELICES50'
+      'Descuento aniversario Pastelería 1000 Sabores - código FELICES50'
   }
 
 
@@ -257,6 +290,7 @@ export const authService = {
   register,
   authenticate,
   isDuocEmail,
+  isAllowedEmailDomain,
   isBirthdayToday,
   calculateAge
 }

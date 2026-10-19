@@ -2,5 +2,22 @@ body {
   margin: 0;
   background-color: #FFF5E1;
   color: #5D4037;
-  font-family: Arial, sans-serif;
+  font-family: 'Lato', sans-serif;
 }
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Lato', sans-serif;
+  font-weight: 700;
+}
+
+.navbar-brand {
+  font-family: 'Pacifico', cursive;
+  font-size: 1.5rem;
+}
+
+

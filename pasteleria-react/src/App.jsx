@@ -21,6 +21,9 @@ import Contact from './pages/Contact'
 import Blog from './pages/Blog'
 import BlogDetail from './pages/BlogDetail'
 import AdminDashboard from './pages/AdminDashboard'
+import AdminOrders from './pages/AdminOrders'
+import AdminUsers from './pages/AdminUsers'
+import AdminReports from './pages/AdminReports'
 
 function App() {
   return (
@@ -135,6 +138,39 @@ function App() {
               allowedRoles={['ADMIN']}
             >
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/pedidos"
+          element={
+            <ProtectedRoute
+              allowedRoles={['ADMIN']}
+            >
+              <AdminOrders />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/usuarios"
+          element={
+            <ProtectedRoute
+              allowedRoles={['ADMIN']}
+            >
+              <AdminUsers />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin/reportes"
+          element={
+            <ProtectedRoute
+              allowedRoles={['ADMIN']}
+            >
+              <AdminReports />
             </ProtectedRoute>
           }
         />
