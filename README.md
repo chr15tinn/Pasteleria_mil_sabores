@@ -60,15 +60,7 @@ Correos pertenecientes a otros servicios, como Gmail, Hotmail, Outlook o Yahoo, 
 
 ## 🎁 Beneficios para clientes
 
-El proyecto contempla beneficios especiales definidos para la pastelería.
-
-### 👵 Descuento para mayores de 50 años
-
-Los clientes mayores de 50 años pueden recibir un:
-
-```text
-50% de descuento
-```
+El proyecto contempla beneficios especiales definidos para Pastelería 1000 Sabores.
 
 ### 🎉 Código promocional FELICES50
 
@@ -88,7 +80,7 @@ Entrega un:
 
 ### 🎂 Beneficio de cumpleaños
 
-Los usuarios con correo institucional Duoc pueden acceder al beneficio de torta gratis durante su cumpleaños, de acuerdo con la lógica definida en la aplicación.
+Los usuarios registrados con correo institucional Duoc pueden acceder al beneficio de una torta gratis durante su cumpleaños, de acuerdo con la lógica implementada en la aplicación.
 
 ---
 
