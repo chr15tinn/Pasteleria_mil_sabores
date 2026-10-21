@@ -103,18 +103,18 @@ function Products() {
 
       <div className="text-center mb-5">
 
-        <h1
-          style={{
-            color: '#8B4513'
-          }}
-        >
-          Nuestros Productos
-        </h1>
+        <div className="mb-4">
 
-        <p>
-          Descubre nuestro catálogo de tortas
-          y productos de repostería.
-        </p>
+          <h1 className="titulo-principal">
+            Nuestros Productos
+          </h1>
+
+          <p className="subtitulo-seccion">
+            Descubre nuestro catálogo de tortas
+            y productos de repostería.
+          </p>
+
+        </div>
 
       </div>
 
