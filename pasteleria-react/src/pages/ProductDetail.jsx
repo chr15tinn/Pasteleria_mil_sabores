@@ -36,7 +36,7 @@ function ProductDetail() {
 
   function handleAddToCart() {
 
-    addToCart(product)
+    if (!addToCart(product)) return
 
     alert(
       `${product.name} fue agregado al carrito`
