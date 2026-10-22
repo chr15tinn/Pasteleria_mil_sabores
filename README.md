@@ -489,6 +489,11 @@ Para generar el reporte de cobertura:
 npm run test:coverage
 ```
 
+```registro de testing:
+npm run test:coverage 2>&1 | Tee-Object -FilePath ".\resultado-testing.txt"
+```
+
+
 ---
 
 ## 📊 Cobertura de pruebas
