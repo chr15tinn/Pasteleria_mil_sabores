@@ -1,4 +1,8 @@
 import {
+  productRepository 
+} from '../repositories/productRepository'
+
+import {
   createContext,
   useContext,
   useEffect,
@@ -30,40 +34,40 @@ export function CartProvider({ children }) {
   }, [cart])
 
 
-  function addToCart(product) {
+ 
+function addToCart(product) {
+  const productoActual = productRepository.getById(product.id)
+  const stock = Number(productoActual?.stock ?? product.stock ?? 0)
 
-    setCart(currentCart => {
+  const existente = cart.find(item => item.id === product.id)
+  const cantidadActual = existente?.quantity || 0
 
-      const existingProduct =
-        currentCart.find(
-          item => item.id === product.id
-        )
-
-      if (existingProduct) {
-
-        return currentCart.map(item =>
-
-          item.id === product.id
-
-            ? {
-                ...item,
-                quantity:
-                  item.quantity + 1
-              }
-
-            : item
-        )
-      }
-
-      return [
-        ...currentCart,
-        {
-          ...product,
-          quantity: 1
-        }
-      ]
-    })
+  if (cantidadActual + 1 > stock) {
+    alert(`Stock insuficiente. Disponibles: ${Math.max(0, stock - cantidadActual)}`)
+    return false
   }
+
+  setCart(currentCart => {
+    const existingProduct = currentCart.find(
+      item => item.id === product.id
+    )
+
+    if (existingProduct) {
+      return currentCart.map(item =>
+        item.id === product.id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      )
+    }
+
+    return [
+      ...currentCart,
+      { ...product, stock, quantity: 1 }
+    ]
+  })
+
+  return true
+}
 
 
   function removeFromCart(id) {
@@ -76,33 +80,32 @@ export function CartProvider({ children }) {
   }
 
 
-  function updateQuantity(
-    id,
-    quantity
-  ) {
+ 
+function updateQuantity(id, quantity) {
+  const nuevaCantidad = Number(quantity)
 
-    const newQuantity =
-      Number(quantity)
-
-    if (newQuantity <= 0) {
-      removeFromCart(id)
-      return
-    }
-
-    setCart(currentCart =>
-      currentCart.map(item =>
-
-        item.id === id
-
-          ? {
-              ...item,
-              quantity: newQuantity
-            }
-
-          : item
-      )
-    )
+  if (nuevaCantidad <= 0) {
+    removeFromCart(id)
+    return
   }
+
+  const producto = productRepository.getById(id)
+  const stock = Number(producto?.stock ?? 0)
+
+  if (!Number.isInteger(nuevaCantidad) || nuevaCantidad > stock) {
+    alert(`Stock insuficiente. Stock disponible: ${stock}`)
+    return
+  }
+
+  setCart(currentCart =>
+    currentCart.map(item =>
+      item.id === id
+        ? { ...item, quantity: nuevaCantidad }
+        : item
+    )
+  )
+}
+
 
 
   function clearCart() {
