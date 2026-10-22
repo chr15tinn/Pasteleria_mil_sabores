@@ -74,6 +74,27 @@ function Checkout() {
       return
     }
 
+    
+const productosActuales = JSON.parse(
+  localStorage.getItem('products') || '[]'
+)
+
+const stockInsuficiente = cart.find(item => {
+  const producto = productosActuales.find(
+    p => p.id === item.id
+  )
+
+  return !producto || item.quantity > Number(producto.stock || 0)
+})
+
+if (stockInsuficiente) {
+  setMessage(
+    `⚠️ Stock insuficiente para ${stockInsuficiente.name}. Ajusta la cantidad antes de comprar.`
+  )
+  return
+}
+
+
 
     if (
       !form.email ||
