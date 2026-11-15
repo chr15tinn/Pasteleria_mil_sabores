@@ -10,17 +10,22 @@ function getUsers() {
       localStorage.getItem(USERS_KEY)
     ) || []
 
-  const adminExists =
-    users.some(
-      user =>
-        user.email ===
-        'admin@1000sabores.cl'
+
+  const initialUsersMissing =
+    initialUsers.filter(
+      initialUser =>
+        !users.some(
+          user =>
+            user.email.toLowerCase() ===
+            initialUser.email.toLowerCase()
+        )
     )
 
-  if (!adminExists) {
+
+  if (initialUsersMissing.length > 0) {
 
     users = [
-      ...initialUsers,
+      ...initialUsersMissing,
       ...users
     ]
 
@@ -29,6 +34,7 @@ function getUsers() {
       JSON.stringify(users)
     )
   }
+
 
   return users
 }

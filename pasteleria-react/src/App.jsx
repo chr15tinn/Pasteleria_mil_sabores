@@ -1,5 +1,8 @@
 import { Routes, Route } from 'react-router-dom'
 
+import PurchaseError from './pages/PurchaseError'
+import SellerOrders from './pages/SellerOrders'
+import SellerOrderDetail from './pages/SellerOrderDetail'
 import Navbar from './components/organisms/Navbar'
 import Home from './pages/Home'
 import Products from './pages/Products'
@@ -173,6 +176,33 @@ function App() {
               <AdminReports />
             </ProtectedRoute>
           }
+        />
+
+        <Route
+          path="/vendedor/ordenes"
+          element={
+            <ProtectedRoute
+              allowedRoles={['VENDEDOR']}
+            >
+              <SellerOrders />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/vendedor/ordenes/detalle"
+          element={
+            <ProtectedRoute
+              allowedRoles={['VENDEDOR']}
+            >
+              <SellerOrderDetail />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/compra-fallida"
+          element={<PurchaseError />}
         />
 
       </Routes>
