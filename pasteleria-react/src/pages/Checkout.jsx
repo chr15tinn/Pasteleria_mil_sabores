@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
+import { paymentService } from '../services/paymentService'
+
 
 function Checkout() {
 
@@ -20,10 +22,32 @@ function Checkout() {
   } = useAuth()
 
 
+  /*
+    Los precios publicados ya incluyen IVA.
+
+    Por eso:
+    Total = subtotal
+    Neto = Total / 1.19
+    IVA = Total - Neto
+  */
+
+  const neto =
+    subtotal / 1.19
+
+  const iva =
+    subtotal - neto
+
+
   const [form, setForm] = useState({
+
+    nombre:
+      user?.nombre || '',
 
     email:
       user?.email || '',
+
+    telefono:
+      user?.telefono || '',
 
     direccion:
       user?.direccion || '',
@@ -45,6 +69,9 @@ function Checkout() {
 
   const [message, setMessage] =
     useState('')
+  
+  const [simulateFailure, setSimulateFailure] =
+    useState(false)
 
 
   function handleChange(event) {
@@ -65,6 +92,7 @@ function Checkout() {
 
     event.preventDefault()
 
+
     if (cart.length === 0) {
 
       setMessage(
@@ -74,30 +102,43 @@ function Checkout() {
       return
     }
 
-    
-const productosActuales = JSON.parse(
-  localStorage.getItem('products') || '[]'
-)
 
-const stockInsuficiente = cart.find(item => {
-  const producto = productosActuales.find(
-    p => p.id === item.id
-  )
+    const productosActuales =
+      JSON.parse(
+        localStorage.getItem('products') || '[]'
+      )
 
-  return !producto || item.quantity > Number(producto.stock || 0)
-})
 
-if (stockInsuficiente) {
-  setMessage(
-    `⚠️ Stock insuficiente para ${stockInsuficiente.name}. Ajusta la cantidad antes de comprar.`
-  )
-  return
-}
+    const stockInsuficiente =
+      cart.find(item => {
 
+        const producto =
+          productosActuales.find(
+            p => p.id === item.id
+          )
+
+        return (
+          !producto ||
+          item.quantity >
+            Number(producto.stock || 0)
+        )
+      })
+
+
+    if (stockInsuficiente) {
+
+      setMessage(
+        `⚠️ Stock insuficiente para ${stockInsuficiente.name}. Ajusta la cantidad antes de comprar.`
+      )
+
+      return
+    }
 
 
     if (
+      !form.nombre ||
       !form.email ||
+      !form.telefono ||
       !form.direccion ||
       !form.region ||
       !form.comuna ||
@@ -113,6 +154,42 @@ if (stockInsuficiente) {
       return
     }
 
+    const paymentResult =
+  paymentService.processPayment({
+    medioPago:
+      form.medioPago,
+
+    total:
+      subtotal,
+
+    simulateFailure
+  })
+
+
+if (!paymentResult.success) {
+
+  localStorage.setItem(
+    'ultimoPagoFallido',
+    JSON.stringify({
+      mensaje:
+        paymentResult.message,
+
+      total:
+        subtotal,
+
+      medioPago:
+        form.medioPago,
+
+      fecha:
+        new Date()
+          .toLocaleString('es-CL')
+    })
+  )
+
+  navigate('/compra-fallida')
+
+  return
+}
 
     const numeroPedido =
       'PED-' +
@@ -128,8 +205,14 @@ if (stockInsuficiente) {
       usuarioId:
         user?.id || null,
 
+      nombre:
+        form.nombre,
+
       email:
         form.email,
+
+      telefono:
+        form.telefono,
 
       direccion:
         form.direccion,
@@ -154,6 +237,12 @@ if (stockInsuficiente) {
 
       productos:
         cart,
+
+      neto:
+        Math.round(neto),
+
+      iva:
+        Math.round(iva),
 
       subtotal:
         subtotal,
@@ -211,6 +300,9 @@ if (stockInsuficiente) {
 
       <div className="row g-4">
 
+
+        {/* DATOS DEL CLIENTE */}
+
         <div className="col-lg-7">
 
           <div className="card shadow-sm p-4">
@@ -252,6 +344,29 @@ if (stockInsuficiente) {
               onSubmit={handleSubmit}
             >
 
+
+              {/* NOMBRE */}
+
+              <div className="mb-3">
+
+                <label className="form-label">
+                  Nombre completo
+                </label>
+
+                <input
+                  type="text"
+                  className="form-control"
+                  name="nombre"
+                  value={form.nombre}
+                  onChange={handleChange}
+                  required
+                />
+
+              </div>
+
+
+              {/* CORREO */}
+
               <div className="mb-3">
 
                 <label className="form-label">
@@ -270,10 +385,33 @@ if (stockInsuficiente) {
               </div>
 
 
+              {/* TELÉFONO */}
+
               <div className="mb-3">
 
                 <label className="form-label">
-                  Dirección
+                  Teléfono
+                </label>
+
+                <input
+                  type="tel"
+                  className="form-control"
+                  name="telefono"
+                  value={form.telefono}
+                  onChange={handleChange}
+                  placeholder="Ej: 912345678"
+                  required
+                />
+
+              </div>
+
+
+              {/* DIRECCIÓN */}
+
+              <div className="mb-3">
+
+                <label className="form-label">
+                  Dirección de entrega
                 </label>
 
                 <input
@@ -281,16 +419,19 @@ if (stockInsuficiente) {
                   name="direccion"
                   value={form.direccion}
                   onChange={handleChange}
+                  placeholder="Calle y número"
                   required
                 />
 
               </div>
 
 
+              {/* REFERENCIA */}
+
               <div className="mb-3">
 
                 <label className="form-label">
-                  Descripción
+                  Referencia de la dirección
                 </label>
 
                 <input
@@ -298,11 +439,13 @@ if (stockInsuficiente) {
                   name="descripcion"
                   value={form.descripcion}
                   onChange={handleChange}
-                  placeholder="Casa, departamento, etc."
+                  placeholder="Casa, departamento, block, oficina, etc."
                 />
 
               </div>
 
+
+              {/* REGIÓN Y COMUNA */}
 
               <div className="row">
 
@@ -368,6 +511,8 @@ if (stockInsuficiente) {
               </div>
 
 
+              {/* CÓDIGO POSTAL Y FECHA */}
+
               <div className="row">
 
                 <div className="col-md-6 mb-3">
@@ -408,6 +553,8 @@ if (stockInsuficiente) {
               </div>
 
 
+              {/* MEDIO DE PAGO */}
+
               <div className="mb-4">
 
                 <label className="form-label">
@@ -438,6 +585,31 @@ if (stockInsuficiente) {
 
               </div>
 
+        <div className="form-check mb-4">
+
+          <input
+            className="form-check-input"
+            type="checkbox"
+            id="simulateFailure"
+            checked={simulateFailure}
+            onChange={event =>
+              setSimulateFailure(
+                event.target.checked
+              )
+            }
+          />
+
+          <label
+            className="form-check-label"
+            htmlFor="simulateFailure"
+          >
+            Simular rechazo de pago
+            <span className="text-muted">
+              {' '}(solo para pruebas)
+            </span>
+          </label>
+
+        </div>
 
               <button
                 type="submit"
@@ -452,6 +624,8 @@ if (stockInsuficiente) {
 
         </div>
 
+
+        {/* RESUMEN */}
 
         <div className="col-lg-5">
 
@@ -478,6 +652,7 @@ if (stockInsuficiente) {
                 </span>
 
                 <span>
+
                   $
                   {
                     (
@@ -486,6 +661,7 @@ if (stockInsuficiente) {
                     )
                       .toLocaleString('es-CL')
                   }
+
                 </span>
 
               </div>
@@ -496,17 +672,72 @@ if (stockInsuficiente) {
             <hr />
 
 
-            <h5 className="text-end">
+            <div
+              className="d-flex justify-content-between mb-2"
+            >
 
-              Total:
-              {' '}
-              $
-              {
-                subtotal
-                  .toLocaleString('es-CL')
-              }
+              <span>
+                Neto
+              </span>
 
-            </h5>
+              <strong>
+                $
+                {Math.round(neto)
+                  .toLocaleString('es-CL')}
+              </strong>
+
+            </div>
+
+
+            <div
+              className="d-flex justify-content-between mb-2"
+            >
+
+              <span>
+                IVA (19%)
+              </span>
+
+              <strong>
+                $
+                {Math.round(iva)
+                  .toLocaleString('es-CL')}
+              </strong>
+
+            </div>
+
+
+            <hr />
+
+
+            <div
+              className="d-flex justify-content-between"
+            >
+
+              <span className="fw-bold">
+                Total
+              </span>
+
+              <strong
+                style={{
+                  color: '#8B4513',
+                  fontSize: '1.25rem'
+                }}
+              >
+
+                $
+                {subtotal
+                  .toLocaleString('es-CL')}
+
+              </strong>
+
+            </div>
+
+
+            <p
+              className="text-muted small mt-2 mb-0"
+            >
+              Los precios incluyen IVA.
+            </p>
 
           </div>
 

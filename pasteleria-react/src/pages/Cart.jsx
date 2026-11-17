@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
 
 import CartItem from '../components/molecules/CartItem'
-import Price from '../components/atoms/Price'
 import { useCart } from '../context/CartContext'
 
 function Cart() {
@@ -13,6 +12,12 @@ function Cart() {
     clearCart,
     subtotal
   } = useCart()
+
+  const neto =
+  subtotal / 1.19
+
+  const iva =
+  subtotal - neto
 
 
   if (cart.length === 0) {
@@ -100,21 +105,75 @@ function Cart() {
       </div>
 
 
-      <div className="text-end">
+<div className="card shadow-sm mt-4">
 
-        <h4>
+  <div className="card-body">
 
-          Total:
+    <h4 className="mb-3">
+      Resumen de compra
+    </h4>
 
-          {' '}
 
-          <Price
-            value={subtotal}
-          />
+    <div className="d-flex justify-content-between mb-2">
 
-        </h4>
+      <span>
+        Neto
+      </span>
 
-      </div>
+      <strong>
+        $
+        {Math.round(neto)
+          .toLocaleString('es-CL')}
+      </strong>
+
+    </div>
+
+
+    <div className="d-flex justify-content-between mb-2">
+
+      <span>
+        IVA (19%)
+      </span>
+
+      <strong>
+        $
+        {Math.round(iva)
+          .toLocaleString('es-CL')}
+      </strong>
+
+    </div>
+
+
+    <hr />
+
+
+    <div className="d-flex justify-content-between">
+
+      <span className="fw-bold">
+        Total
+      </span>
+
+      <strong
+        style={{
+          color: '#8B4513',
+          fontSize: '1.3rem'
+        }}
+      >
+        $
+        {Math.round(subtotal)
+          .toLocaleString('es-CL')}
+      </strong>
+
+    </div>
+
+
+    <p className="text-muted small mt-2 mb-0">
+      Los precios incluyen IVA.
+    </p>
+
+  </div>
+
+</div>
 
 
       <div

@@ -1,8 +1,18 @@
 import { Link } from 'react-router-dom'
 
+
 function PurchaseError() {
 
+  const failedPayment =
+    JSON.parse(
+      localStorage.getItem(
+        'ultimoPagoFallido'
+      )
+    )
+
+
   return (
+
     <main className="container py-5">
 
       <div
@@ -22,6 +32,7 @@ function PurchaseError() {
             ❌
           </div>
 
+
           <h1
             className="mt-3"
             style={{
@@ -31,19 +42,75 @@ function PurchaseError() {
             No se pudo realizar el pago
           </h1>
 
-          <p className="mt-3 text-muted">
-            Ocurrió un problema al procesar
-            la compra. No se ha generado
-            ningún pedido.
-          </p>
 
-          <p>
-            Puedes volver al carrito
-            e intentar nuevamente.
+          <p className="mt-3">
+            {
+              failedPayment?.mensaje ||
+              'Ocurrió un problema al procesar el pago.'
+            }
           </p>
 
 
-          <div className="d-flex gap-2 justify-content-center mt-4">
+          {failedPayment && (
+
+            <div
+              className="alert alert-light text-start mt-4"
+            >
+
+              <p className="mb-2">
+
+                <strong>
+                  Medio de pago:
+                </strong>{' '}
+
+                {failedPayment.medioPago}
+
+              </p>
+
+
+              <p className="mb-2">
+
+                <strong>
+                  Monto:
+                </strong>{' '}
+
+                $
+                {
+                  Number(
+                    failedPayment.total
+                  ).toLocaleString(
+                    'es-CL'
+                  )
+                }
+
+              </p>
+
+
+              <p className="mb-0">
+
+                <strong>
+                  Fecha:
+                </strong>{' '}
+
+                {failedPayment.fecha}
+
+              </p>
+
+            </div>
+
+          )}
+
+
+          <p className="text-muted mt-4">
+            No se generó ninguna orden
+            y puedes intentar realizar
+            el pago nuevamente.
+          </p>
+
+
+          <div
+            className="d-flex gap-2 justify-content-center mt-4"
+          >
 
             <Link
               to="/carrito"
@@ -51,6 +118,7 @@ function PurchaseError() {
             >
               Volver al carrito
             </Link>
+
 
             <Link
               to="/checkout"
@@ -68,5 +136,6 @@ function PurchaseError() {
     </main>
   )
 }
+
 
 export default PurchaseError
