@@ -7,6 +7,7 @@ import {
 import { productRepository } from '../repositories/productRepository'
 import { useCart } from '../context/CartContext'
 import Price from '../components/atoms/Price'
+import { useAuth } from '../context/AuthContext'
 
 function ProductDetail() {
 
@@ -32,6 +33,14 @@ function ProductDetail() {
     setLoading(false)
 
   }, [id])
+    const {
+    user,
+    isAuthenticated
+  } = useAuth()
+
+    const canBuy =
+      isAuthenticated &&
+      user?.role === 'CLIENTE'
 
 
   function handleAddToCart() {
@@ -198,17 +207,21 @@ function ProductDetail() {
 
           <div className="d-flex gap-2 flex-wrap mt-4">
 
-            <button
-              className="btn btn-dark"
-              onClick={handleAddToCart}
-              disabled={product.stock <= 0}
-            >
+            {canBuy && (
 
-              {product.stock > 0
-                ? 'Agregar al carrito'
-                : 'Sin stock'}
+              <button
+                className="btn btn-dark"
+                onClick={handleAddToCart}
+                disabled={product.stock <= 0}
+              >
 
-            </button>
+                {product.stock > 0
+                  ? 'Agregar al carrito'
+                  : 'Sin stock'}
+
+              </button>
+
+            )}
 
 
             <Link

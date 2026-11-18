@@ -1,18 +1,13 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
 function Tracking() {
 
-  const pedidoGuardado =
+  const pedido =
     JSON.parse(
       localStorage.getItem(
         'pedidoSeleccionado'
       )
     )
-
-
-  const [pedido, setPedido] =
-    useState(pedidoGuardado)
 
 
   if (!pedido) {
@@ -46,96 +41,12 @@ function Tracking() {
     )
 
 
-  function actualizarEstado() {
-
-    if (
-      posicionActual >=
-      estados.length - 1
-    ) {
-
-      alert(
-        '🎂 Este pedido ya fue entregado.'
-      )
-
-      return
-    }
-
-
-    const nuevoEstado =
-      estados[
-        posicionActual + 1
-      ]
-
-
-    const pedidoActualizado = {
-      ...pedido,
-      estado: nuevoEstado
-    }
-
-
-    setPedido(
-      pedidoActualizado
-    )
-
-
-    localStorage.setItem(
-      'pedidoSeleccionado',
-      JSON.stringify(
-        pedidoActualizado
-      )
-    )
-
-
-    const pedidos =
-      JSON.parse(
-        localStorage.getItem(
-          'pedidos'
-        )
-      ) || []
-
-
-    const pedidosActualizados =
-      pedidos.map(item =>
-
-        item.numeroPedido ===
-        pedido.numeroPedido
-
-          ? pedidoActualizado
-
-          : item
-
-      )
-
-
-    localStorage.setItem(
-      'pedidos',
-      JSON.stringify(
-        pedidosActualizados
-      )
-    )
-
-
-    const ultimaCompra =
-      JSON.parse(
-        localStorage.getItem(
-          'ultimaCompra'
-        )
-      )
-
-
-    if (
-      ultimaCompra?.numeroPedido ===
-      pedido.numeroPedido
-    ) {
-
-      localStorage.setItem(
-        'ultimaCompra',
-        JSON.stringify(
-          pedidoActualizado
-        )
-      )
-    }
-  }
+  const iconos = [
+    '✅',
+    '👨‍🍳',
+    '🚚',
+    '🎂'
+  ]
 
 
   return (
@@ -216,14 +127,6 @@ function Tracking() {
             }
 
 
-            const iconos = [
-              '✅',
-              '👨‍🍳',
-              '🚚',
-              '🎂'
-            ]
-
-
             return (
 
               <div
@@ -254,26 +157,14 @@ function Tracking() {
         </div>
 
 
-        <div
-          className="d-flex justify-content-between mt-4"
-        >
+        <div className="text-center mt-4">
 
           <Link
             to="/pedidos"
             className="btn btn-outline-dark"
           >
-            Volver
+            Volver a mis pedidos
           </Link>
-
-
-          <button
-            className="btn btn-dark"
-            onClick={
-              actualizarEstado
-            }
-          >
-            Actualizar estado
-          </button>
 
         </div>
 

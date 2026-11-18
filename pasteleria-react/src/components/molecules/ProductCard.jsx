@@ -1,8 +1,19 @@
 import { Link } from 'react-router-dom'
 import Button from '../atoms/Button'
 import Price from '../atoms/Price'
+import { useAuth } from '../../context/AuthContext'
 
 function ProductCard({ product, onAddToCart }) {
+
+  const {
+  user,
+  isAuthenticated
+} = useAuth()
+
+  const canBuy =
+    !isAuthenticated ||
+    user?.role === 'CLIENTE'
+
   return (
     <div className="card h-100 shadow-sm">
 
@@ -51,12 +62,17 @@ function ProductCard({ product, onAddToCart }) {
                 Ver detalle
             </Link>
 
+          {canBuy && (
+
             <Button
-                className="btn btn-dark"
-                onClick={() => onAddToCart(product)}
+              onClick={() =>
+                onAddToCart(product)
+              }
             >
-                Agregar al carrito
+              Agregar al carrito
             </Button>
+
+          )}
 
             </div>
 

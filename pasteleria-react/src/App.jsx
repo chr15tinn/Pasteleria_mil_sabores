@@ -70,22 +70,46 @@ function App() {
 
         <Route
           path="/checkout"
-          element={<Checkout />}
+          element={
+            <ProtectedRoute
+              allowedRoles={['CLIENTE']}
+            >
+              <Checkout />
+            </ProtectedRoute>
+          }
         />
 
         <Route
           path="/compra-exitosa"
-          element={<PurchaseSuccess />}
+          element={
+            <ProtectedRoute
+              allowedRoles={['CLIENTE']}
+            >
+              <PurchaseSuccess />
+            </ProtectedRoute>
+          }
         />
 
         <Route
           path="/pedidos"
-          element={<Orders />}
+          element={
+            <ProtectedRoute
+              allowedRoles={['CLIENTE']}
+            >
+              <Orders />
+            </ProtectedRoute>
+          }
         />
 
         <Route
           path="/seguimiento"
-          element={<Tracking />}
+          element={
+            <ProtectedRoute
+              allowedRoles={['CLIENTE']}
+            >
+              <Tracking />
+            </ProtectedRoute>
+          }
         />
 
         <Route
@@ -101,7 +125,13 @@ function App() {
 
         <Route
           path="/perfil"
-          element={<Profile />}
+          element={
+            <ProtectedRoute
+              allowedRoles={['CLIENTE', 'ADMIN']}
+            >
+              <Profile />
+            </ProtectedRoute>
+          }
         />
 
         <Route
@@ -202,7 +232,13 @@ function App() {
 
         <Route
           path="/compra-fallida"
-          element={<PurchaseError />}
+          element={
+            <ProtectedRoute
+              allowedRoles={['CLIENTE']}
+            >
+              <PurchaseError />
+            </ProtectedRoute>
+          }
         />
 
       </Routes>
