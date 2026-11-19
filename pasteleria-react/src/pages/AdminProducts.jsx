@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react'
+
 import { productRepository } from '../repositories/productRepository'
+import { apiRequest } from '../services/api'
 
 function AdminProducts() {
 
   const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
+
+  const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState('')
 
   const [form, setForm] = useState({
-    id: '',
-    category: '',
+    categoryId: '',
     name: '',
     price: '',
     description: '',
@@ -16,17 +21,103 @@ function AdminProducts() {
     offer: false
   })
 
-  const [editingId, setEditingId] = useState(null)
+  const [editingId, setEditingId] =
+    useState(null)
 
 
-  function loadProducts() {
-    const data = productRepository.getAll()
-    setProducts(data)
+  async function loadProducts() {
+
+    try {
+
+      const data =
+        await productRepository.getAll()
+
+      const adaptedProducts =
+        data.map(product => ({
+          id: product.id,
+
+          name:
+            product.nombre,
+
+          description:
+            product.descripcion || '',
+
+          price:
+            Number(product.precio),
+
+          stock:
+            product.stock,
+
+          image:
+            product.imagen || '',
+
+          offer:
+            product.oferta,
+
+          category:
+            product.categoria?.nombre ||
+            'Sin categoría',
+
+          categoryId:
+            product.categoria?.id
+        }))
+
+      setProducts(adaptedProducts)
+
+    } catch (error) {
+
+      console.error(
+        'Error al cargar productos:',
+        error
+      )
+
+      setMessage(
+        'No fue posible cargar los productos.'
+      )
+    }
+  }
+
+
+  async function loadCategories() {
+
+    try {
+
+      const data =
+        await apiRequest('/categorias')
+
+      setCategories(data)
+
+    } catch (error) {
+
+      console.error(
+        'Error al cargar categorías:',
+        error
+      )
+
+      setMessage(
+        'No fue posible cargar las categorías.'
+      )
+    }
   }
 
 
   useEffect(() => {
-    loadProducts()
+
+    async function loadData() {
+
+      setLoading(true)
+      setMessage('')
+
+      await Promise.all([
+        loadProducts(),
+        loadCategories()
+      ])
+
+      setLoading(false)
+    }
+
+    loadData()
+
   }, [])
 
 
@@ -41,6 +132,7 @@ function AdminProducts() {
 
     setForm(current => ({
       ...current,
+
       [name]:
         type === 'checkbox'
           ? checked
@@ -52,8 +144,7 @@ function AdminProducts() {
   function resetForm() {
 
     setForm({
-      id: '',
-      category: '',
+      categoryId: '',
       name: '',
       price: '',
       description: '',
@@ -66,69 +157,88 @@ function AdminProducts() {
   }
 
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
 
     event.preventDefault()
 
+    setMessage('')
+
     const productData = {
-      id:
-        editingId ||
-        form.id.trim(),
 
-      category:
-        form.category.trim(),
-
-      name:
+      nombre:
         form.name.trim(),
 
-      price:
-        Number(form.price),
-
-      description:
+      descripcion:
         form.description.trim(),
 
-      image:
-        form.image.trim(),
+      precio:
+        Number(form.price),
 
       stock:
         Number(form.stock),
 
-      offer:
-        form.offer
+      imagen:
+        form.image.trim(),
+
+      oferta:
+        form.offer,
+
+      categoria: {
+        id:
+          Number(form.categoryId)
+      }
     }
 
 
-    if (editingId) {
+    try {
 
-      productRepository.update(
-        editingId,
-        productData
-      )
+      if (editingId) {
 
-    } else {
-
-      const existing =
-        productRepository.getById(
-          productData.id
+        await productRepository.update(
+          editingId,
+          productData
         )
 
-      if (existing) {
+        setMessage(
+          '✅ Producto actualizado correctamente.'
+        )
 
-        alert(
-          '⚠️ Ya existe un producto con ese código.'
+      } else {
+
+        await productRepository.create(
+          productData
+        )
+
+        setMessage(
+          '✅ Producto creado correctamente.'
+        )
+      }
+
+
+      resetForm()
+
+      await loadProducts()
+
+    } catch (error) {
+
+      console.error(
+        'Error al guardar producto:',
+        error
+      )
+
+      if (error.status === 403) {
+
+        setMessage(
+          'No tienes permiso para realizar esta operación.'
         )
 
         return
       }
 
-      productRepository.create(
-        productData
+      setMessage(
+        'No fue posible guardar el producto.'
       )
     }
-
-
-    resetForm()
-    loadProducts()
   }
 
 
@@ -137,15 +247,28 @@ function AdminProducts() {
     setEditingId(product.id)
 
     setForm({
-      id: product.id,
-      category: product.category,
-      name: product.name,
-      price: product.price,
-      description: product.description,
-      image: product.image || '',
-      stock: product.stock,
-      offer: product.offer || false
+      categoryId:
+        product.categoryId || '',
+
+      name:
+        product.name,
+
+      price:
+        product.price,
+
+      description:
+        product.description,
+
+      image:
+        product.image || '',
+
+      stock:
+        product.stock,
+
+      offer:
+        product.offer || false
     })
+
 
     window.scrollTo({
       top: 0,
@@ -154,7 +277,7 @@ function AdminProducts() {
   }
 
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
 
     const confirmDelete =
       window.confirm(
@@ -166,9 +289,51 @@ function AdminProducts() {
     }
 
 
-    productRepository.remove(id)
+    try {
 
-    loadProducts()
+      await productRepository.remove(id)
+
+      setMessage(
+        '✅ Producto eliminado correctamente.'
+      )
+
+      await loadProducts()
+
+    } catch (error) {
+
+      console.error(
+        'Error al eliminar producto:',
+        error
+      )
+
+      if (error.status === 403) {
+
+        setMessage(
+          'No tienes permiso para eliminar productos.'
+        )
+
+        return
+      }
+
+      setMessage(
+        'No fue posible eliminar el producto.'
+      )
+    }
+  }
+
+
+  if (loading) {
+
+    return (
+
+      <main className="container py-5">
+
+        <p className="text-center">
+          Cargando administración...
+        </p>
+
+      </main>
+    )
   }
 
 
@@ -186,6 +351,15 @@ function AdminProducts() {
       </h1>
 
 
+      {message && (
+
+        <div className="alert alert-info">
+          {message}
+        </div>
+
+      )}
+
+
       <div className="card shadow-sm p-4 mb-5">
 
         <h4>
@@ -200,42 +374,42 @@ function AdminProducts() {
           className="row g-3"
         >
 
-          <div className="col-md-4">
-
-            <label className="form-label">
-              Código
-            </label>
-
-            <input
-              className="form-control"
-              name="id"
-              value={form.id}
-              onChange={handleChange}
-              disabled={!!editingId}
-              required
-            />
-
-          </div>
-
-
-          <div className="col-md-4">
+          <div className="col-md-6">
 
             <label className="form-label">
               Categoría
             </label>
 
-            <input
-              className="form-control"
-              name="category"
-              value={form.category}
+            <select
+              className="form-select"
+              name="categoryId"
+              value={form.categoryId}
               onChange={handleChange}
               required
-            />
+            >
+
+              <option value="">
+                Seleccionar categoría
+              </option>
+
+
+              {categories.map(category => (
+
+                <option
+                  key={category.id}
+                  value={category.id}
+                >
+                  {category.nombre}
+                </option>
+
+              ))}
+
+            </select>
 
           </div>
 
 
-          <div className="col-md-4">
+          <div className="col-md-6">
 
             <label className="form-label">
               Nombre
@@ -301,7 +475,7 @@ function AdminProducts() {
               name="image"
               value={form.image}
               onChange={handleChange}
-              placeholder="/images/producto.jpg"
+              placeholder="https://..."
             />
 
           </div>
@@ -395,21 +569,13 @@ function AdminProducts() {
             <thead>
 
               <tr>
-
-                <th>Código</th>
-
+                <th>ID</th>
                 <th>Producto</th>
-
                 <th>Categoría</th>
-
                 <th>Precio</th>
-
                 <th>Stock</th>
-
                 <th>Oferta</th>
-
                 <th>Acciones</th>
-
               </tr>
 
             </thead>
@@ -419,9 +585,7 @@ function AdminProducts() {
 
               {products.map(product => (
 
-                <tr
-                  key={product.id}
-                >
+                <tr key={product.id}>
 
                   <td>
                     {product.id}
@@ -442,7 +606,9 @@ function AdminProducts() {
                     $
                     {Number(
                       product.price
-                    ).toLocaleString('es-CL')}
+                    ).toLocaleString(
+                      'es-CL'
+                    )}
                   </td>
 
 
@@ -464,11 +630,9 @@ function AdminProducts() {
 
 
                   <td>
-
                     {product.offer
                       ? 'Sí'
                       : 'No'}
-
                   </td>
 
 

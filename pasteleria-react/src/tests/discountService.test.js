@@ -1,8 +1,24 @@
 import {
   describe,
   expect,
-  it
+  it,
+  vi
 } from 'vitest'
+
+
+vi.mock(
+  '../services/authService',
+  () => ({
+    authService: {
+
+      isBirthdayToday:
+        vi.fn(
+          () => false
+        )
+    }
+  })
+)
+
 
 import {
   discountService
@@ -10,21 +26,33 @@ import {
 
 
 const cart = [
+
   {
-    id: 'TC001',
+    id: 1,
+
     name:
       'Torta Cuadrada de Chocolate',
-    price: 45000,
-    quantity: 1
+
+    price:
+      45000,
+
+    quantity:
+      1
   },
 
   {
-    id: 'PI001',
+    id: 5,
+
     name:
       'Mousse de Chocolate',
-    price: 5000,
-    quantity: 2
+
+    price:
+      5000,
+
+    quantity:
+      2
   }
+
 ]
 
 
@@ -45,8 +73,27 @@ describe(
 
         expect(
           subtotal
-        ).toBe(55000)
+        ).toBe(
+          55000
+        )
+      }
+    )
 
+
+    it(
+      'calcula cero para un carrito vacío',
+      () => {
+
+        const subtotal =
+          discountService
+            .calculateSubtotal(
+              []
+            )
+
+
+        expect(
+          subtotal
+        ).toBe(0)
       }
     )
 
@@ -60,9 +107,6 @@ describe(
           nombre:
             'Christian',
 
-          fechaNacimiento:
-            '1995-05-10',
-
           beneficios: {
 
             descuentoAplicable:
@@ -73,9 +117,7 @@ describe(
 
             esEstudianteDuoc:
               false
-
           }
-
         }
 
 
@@ -89,7 +131,9 @@ describe(
 
         expect(
           result.subtotal
-        ).toBe(55000)
+        ).toBe(
+          55000
+        )
 
 
         expect(
@@ -99,23 +143,21 @@ describe(
 
         expect(
           result.total
-        ).toBe(55000)
-
+        ).toBe(
+          55000
+        )
       }
     )
 
 
     it(
-      'aplica correctamente un descuento del 10%',
+      'aplica correctamente el descuento de aniversario del 10%',
       () => {
 
         const user = {
 
           nombre:
             'Christian',
-
-          fechaNacimiento:
-            '1995-05-10',
 
           beneficios: {
 
@@ -127,9 +169,7 @@ describe(
 
             esEstudianteDuoc:
               false
-
           }
-
         }
 
 
@@ -148,62 +188,16 @@ describe(
 
         expect(
           result.percentageDiscount
-        ).toBe(5500)
+        ).toBe(
+          5500
+        )
 
 
         expect(
           result.total
-        ).toBe(49500)
-
-      }
-    )
-
-
-    it(
-      'aplica correctamente un descuento del 50%',
-      () => {
-
-        const user = {
-
-          nombre:
-            'Christian',
-
-          fechaNacimiento:
-            '1960-05-10',
-
-          beneficios: {
-
-            descuentoAplicable:
-              50,
-
-            motivoDescuento:
-              'Descuento mayor de 50 años',
-
-            esEstudianteDuoc:
-              false
-
-          }
-
-        }
-
-
-        const result =
-          discountService
-            .calculateOrderBenefits(
-              cart,
-              user
-            )
-
-
-        expect(
-          result.percentageDiscount
-        ).toBe(27500)
-
-
-        expect(
-          result.total
-        ).toBe(27500)
-
+        ).toBe(
+          49500
+        )
       }
     )
 

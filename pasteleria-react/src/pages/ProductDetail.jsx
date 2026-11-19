@@ -11,11 +11,14 @@ import { useAuth } from '../context/AuthContext'
 
 function ProductDetail() {
 
-  const { id } =
-    useParams()
+  const { id } = useParams()
 
-  const { addToCart } =
-    useCart()
+  const { addToCart } = useCart()
+
+  const {
+    user,
+    isAuthenticated
+  } = useAuth()
 
   const [product, setProduct] =
     useState(null)
@@ -23,24 +26,80 @@ function ProductDetail() {
   const [loading, setLoading] =
     useState(true)
 
+  const [error, setError] =
+    useState('')
+
 
   useEffect(() => {
 
-    const foundProduct =
-      productRepository.getById(id)
+    async function loadProduct() {
 
-    setProduct(foundProduct || null)
-    setLoading(false)
+      try {
+
+        setLoading(true)
+        setError('')
+
+        const data =
+          await productRepository.getById(id)
+
+        const adaptedProduct = {
+          id: data.id,
+
+          name:
+            data.nombre,
+
+          description:
+            data.descripcion || '',
+
+          price:
+            Number(data.precio),
+
+          stock:
+            data.stock,
+
+          image:
+            data.imagen,
+
+          offer:
+            data.oferta,
+
+          category:
+            data.categoria?.nombre ||
+            'Sin categoría',
+
+          categoryId:
+            data.categoria?.id
+        }
+
+        setProduct(adaptedProduct)
+
+      } catch (error) {
+
+        console.error(
+          'Error al cargar producto:',
+          error
+        )
+
+        setProduct(null)
+
+        setError(
+          'No fue posible cargar el producto.'
+        )
+
+      } finally {
+
+        setLoading(false)
+      }
+    }
+
+    loadProduct()
 
   }, [id])
-    const {
-    user,
-    isAuthenticated
-  } = useAuth()
 
-    const canBuy =
-      isAuthenticated &&
-      user?.role === 'CLIENTE'
+
+  const canBuy =
+    isAuthenticated &&
+    user?.role === 'CLIENTE'
 
 
   function handleAddToCart() {
@@ -74,7 +133,8 @@ function ProductDetail() {
 
         <div className="alert alert-danger text-center">
 
-          No se encontró el producto solicitado.
+          {error ||
+            'No se encontró el producto solicitado.'}
 
         </div>
 

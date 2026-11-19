@@ -10,15 +10,31 @@ function ProtectedRoute({
 
   const {
     user,
-    isAuthenticated
+    isAuthenticated,
+    loading
   } = useAuth()
 
 
   /*
-    Si no existe sesión,
+    Mientras AuthContext recupera
+    la sesión desde localStorage,
+    no redirigimos todavía.
+  */
+  if (loading) {
+
+    return (
+      <div className="container py-5 text-center">
+        Cargando sesión...
+      </div>
+    )
+  }
+
+
+  /*
+    Si ya terminó de cargar
+    y no existe sesión,
     enviamos al login.
   */
-
   if (!isAuthenticated) {
 
     return (
@@ -34,7 +50,6 @@ function ProtectedRoute({
     Si la ruta no define roles,
     basta con estar autenticado.
   */
-
   if (
     !allowedRoles ||
     allowedRoles.length === 0
@@ -48,17 +63,11 @@ function ProtectedRoute({
     Verificamos si el rol
     tiene permiso para entrar.
   */
-
   if (
     !allowedRoles.includes(
       user?.role
     )
   ) {
-
-    /*
-      Cada rol vuelve a una
-      página permitida.
-    */
 
     if (
       user?.role === 'VENDEDOR'
@@ -85,10 +94,6 @@ function ProtectedRoute({
       )
     }
 
-
-    /*
-      CLIENTE
-    */
 
     return (
       <Navigate

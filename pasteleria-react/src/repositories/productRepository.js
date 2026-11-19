@@ -1,77 +1,31 @@
-import { products } from '../data/products'
+import { apiRequest } from '../services/api'
 
-const STORAGE_KEY = 'products'
-
-function initializeProducts() {
-  const storedProducts = localStorage.getItem(STORAGE_KEY)
-
-  if (!storedProducts) {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(products)
-    )
-  }
+async function getAll() {
+  return await apiRequest('/productos')
 }
 
-function getAll() {
-  initializeProducts()
-
-  return JSON.parse(
-    localStorage.getItem(STORAGE_KEY)
-  ) || []
+async function getById(id) {
+  return await apiRequest(`/productos/${id}`)
 }
 
-function getById(id) {
-  const allProducts = getAll()
-
-  return allProducts.find(
-    product => product.id === id
-  )
+async function create(product) {
+  return await apiRequest('/productos', {
+    method: 'POST',
+    body: JSON.stringify(product),
+  })
 }
 
-function create(product) {
-  const allProducts = getAll()
-
-  allProducts.push(product)
-
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(allProducts)
-  )
-
-  return product
+async function update(id, updatedProduct) {
+  return await apiRequest(`/productos/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(updatedProduct),
+  })
 }
 
-function update(id, updatedProduct) {
-  const allProducts = getAll()
-
-  const updatedProducts = allProducts.map(
-    product =>
-      product.id === id
-        ? { ...product, ...updatedProduct }
-        : product
-  )
-
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(updatedProducts)
-  )
-
-  return getById(id)
-}
-
-function remove(id) {
-  const allProducts = getAll()
-
-  const updatedProducts =
-    allProducts.filter(
-      product => product.id !== id
-    )
-
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(updatedProducts)
-  )
+async function remove(id) {
+  await apiRequest(`/productos/${id}`, {
+    method: 'DELETE',
+  })
 
   return true
 }
@@ -81,5 +35,5 @@ export const productRepository = {
   getById,
   create,
   update,
-  remove
+  remove,
 }

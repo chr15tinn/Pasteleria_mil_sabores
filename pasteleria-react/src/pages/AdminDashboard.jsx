@@ -1,26 +1,79 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { productRepository } from '../repositories/productRepository'
+import { apiRequest } from '../services/api'
 
 function AdminDashboard() {
 
-  const products =
-    productRepository.getAll()
+  const [products, setProducts] = useState([])
+  const [users, setUsers] = useState([])
+  const [orders, setOrders] = useState([])
 
-  const users =
-    JSON.parse(
-      localStorage.getItem('usuarios')
-    ) || []
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const orders =
-    JSON.parse(
-      localStorage.getItem('pedidos')
-    ) || []
+
+  useEffect(() => {
+
+    async function loadDashboard() {
+
+      try {
+
+        setLoading(true)
+        setError('')
+
+        const [
+          productsData,
+          usersData,
+          ordersData
+        ] = await Promise.all([
+          productRepository.getAll(),
+          apiRequest('/usuarios'),
+          apiRequest('/boletas')
+        ])
+
+
+        const adaptedProducts =
+          productsData.map(product => ({
+            id: product.id,
+            name: product.nombre,
+            stock: product.stock,
+            price: Number(product.precio)
+          }))
+
+
+        setProducts(adaptedProducts)
+        setUsers(usersData)
+        setOrders(ordersData)
+
+      } catch (error) {
+
+        console.error(
+          'Error al cargar dashboard:',
+          error
+        )
+
+        setError(
+          'No fue posible cargar la información del panel.'
+        )
+
+      } finally {
+
+        setLoading(false)
+      }
+    }
+
+    loadDashboard()
+
+  }, [])
+
 
   const criticalStock =
     products.filter(
       product => product.stock <= 5
     )
+
 
   const totalSales =
     orders.reduce(
@@ -28,6 +81,20 @@ function AdminDashboard() {
         total + Number(order.total || 0),
       0
     )
+
+
+  if (loading) {
+
+    return (
+      <main className="container py-5">
+
+        <p className="text-center">
+          Cargando panel de administración...
+        </p>
+
+      </main>
+    )
+  }
 
 
   return (
@@ -50,6 +117,15 @@ function AdminDashboard() {
         </p>
 
       </div>
+
+
+      {error && (
+
+        <div className="alert alert-danger">
+          {error}
+        </div>
+
+      )}
 
 
       <div className="row g-4 mb-5">

@@ -1,84 +1,249 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+
+import { apiRequest } from '../services/api'
+import { useAuth } from '../context/AuthContext'
 
 function AdminUsers() {
 
   const [users, setUsers] =
-    useState(
-      () =>
-        JSON.parse(
-          localStorage.getItem(
-            'usuarios'
-          )
-        ) || []
-    )
+    useState([])
+
+  const [loading, setLoading] =
+    useState(true)
+
+  const [message, setMessage] =
+    useState('')
+
+  const { user: currentUser } =
+    useAuth()
 
 
-  function cambiarRol(
-    id,
-    nuevoRol
-  ) {
+  async function loadUsers() {
 
-    const updatedUsers =
-      users.map(user =>
-        user.id === id
-          ? {
-              ...user,
-              role: nuevoRol
-            }
-          : user
+    try {
+
+      setLoading(true)
+      setMessage('')
+
+      const data =
+        await apiRequest(
+          '/usuarios'
+        )
+
+      setUsers(data)
+
+    } catch (error) {
+
+      console.error(
+        'Error al cargar usuarios:',
+        error
       )
 
-
-    setUsers(updatedUsers)
-
-
-    localStorage.setItem(
-      'usuarios',
-      JSON.stringify(
-        updatedUsers
+      setMessage(
+        'No fue posible cargar los usuarios.'
       )
-    )
+
+    } finally {
+
+      setLoading(false)
+    }
   }
 
 
-  function eliminarUsuario(id) {
+  useEffect(() => {
+
+    loadUsers()
+
+  }, [])
+
+
+  async function cambiarRol(
+    usuario,
+    nuevoRol
+  ) {
+
+    if (
+      usuario.email ===
+      currentUser?.email
+    ) {
+
+      alert(
+        'No puedes modificar tu propio rol mientras estás conectado.'
+      )
+
+      return
+    }
+
+
+    try {
+
+      setMessage('')
+
+
+      const updatedUser = {
+
+        nombre:
+          usuario.nombre,
+
+        email:
+          usuario.email,
+
+        password:
+          '',
+
+        rol:
+          nuevoRol,
+
+        telefono:
+          usuario.telefono || ''
+      }
+
+
+      await apiRequest(
+        `/usuarios/${usuario.id}`,
+        {
+          method: 'PUT',
+
+          body:
+            JSON.stringify(
+              updatedUser
+            )
+        }
+      )
+
+
+      setUsers(current =>
+        current.map(item =>
+          item.id === usuario.id
+            ? {
+                ...item,
+                rol: nuevoRol
+              }
+            : item
+        )
+      )
+
+
+      setMessage(
+        '✅ Rol actualizado correctamente.'
+      )
+
+    } catch (error) {
+
+      console.error(
+        'Error al cambiar rol:',
+        error
+      )
+
+
+      if (
+        error.status === 403
+      ) {
+
+        setMessage(
+          'No tienes permiso para modificar usuarios.'
+        )
+
+        return
+      }
+
+
+      setMessage(
+        'No fue posible actualizar el rol.'
+      )
+    }
+  }
+
+
+  async function eliminarUsuario(
+    usuario
+  ) {
+
+    if (
+      usuario.email ===
+      currentUser?.email
+    ) {
+
+      alert(
+        'No puedes eliminar tu propia cuenta mientras estás conectado.'
+      )
+
+      return
+    }
+
 
     const confirmed =
       window.confirm(
-        '¿Seguro que quieres eliminar este usuario?'
+        `¿Seguro que quieres eliminar a ${usuario.nombre}?`
       )
+
 
     if (!confirmed) {
       return
     }
 
 
-    const updatedUsers =
-      users.filter(
-        user => user.id !== id
+    try {
+
+      setMessage('')
+
+
+      await apiRequest(
+        `/usuarios/${usuario.id}`,
+        {
+          method: 'DELETE'
+        }
       )
 
 
-    setUsers(updatedUsers)
-
-
-    localStorage.setItem(
-      'usuarios',
-      JSON.stringify(
-        updatedUsers
+      setUsers(current =>
+        current.filter(
+          item =>
+            item.id !== usuario.id
+        )
       )
-    )
+
+
+      setMessage(
+        '✅ Usuario eliminado correctamente.'
+      )
+
+    } catch (error) {
+
+      console.error(
+        'Error al eliminar usuario:',
+        error
+      )
+
+
+      if (
+        error.status === 403
+      ) {
+
+        setMessage(
+          'No tienes permiso para eliminar usuarios.'
+        )
+
+        return
+      }
+
+
+      setMessage(
+        'No fue posible eliminar el usuario.'
+      )
+    }
   }
 
 
-  if (users.length === 0) {
+  if (loading) {
 
     return (
+
       <main className="container py-5">
 
-        <div className="alert alert-warning text-center">
-          No existen usuarios registrados.
-        </div>
+        <p className="text-center">
+          Cargando usuarios...
+        </p>
 
       </main>
     )
@@ -86,6 +251,7 @@ function AdminUsers() {
 
 
   return (
+
     <main className="container py-5">
 
       <h1
@@ -98,99 +264,149 @@ function AdminUsers() {
       </h1>
 
 
-      <div className="table-responsive">
+      {message && (
 
-        <table className="table table-bordered align-middle">
+        <div className="alert alert-info">
 
-          <thead>
+          {message}
 
-            <tr>
-              <th>Nombre</th>
-              <th>Correo</th>
-              <th>Rol</th>
-              <th>Descuento</th>
-              <th>Acciones</th>
-            </tr>
+        </div>
 
-          </thead>
+      )}
 
 
-          <tbody>
+      {users.length === 0 ? (
 
-            {users.map(user => (
+        <div className="alert alert-warning text-center">
 
-              <tr key={user.id}>
+          No existen usuarios registrados.
 
-                <td>
-                  {user.nombre}
-                </td>
+        </div>
 
-                <td>
-                  {user.email}
-                </td>
+      ) : (
 
-                <td>
+        <div className="table-responsive">
 
-                  <select
-                    className="form-select"
-                    value={
-                      user.role ||
-                      'CLIENTE'
-                    }
-                    onChange={event =>
-                      cambiarRol(
-                        user.id,
-                        event.target.value
-                      )
-                    }
-                  >
+          <table className="table table-bordered align-middle">
 
-                    <option value="CLIENTE">
-                      CLIENTE
-                    </option>
+            <thead>
 
-                    <option value="ADMIN">
-                      ADMIN
-                    </option>
-
-                  </select>
-
-                </td>
-
-                <td>
-
-                  {
-                    user.beneficios
-                      ?.descuentoAplicable ||
-                    0
-                  }%
-
-                </td>
-
-                <td>
-
-                  <button
-                    className="btn btn-danger btn-sm"
-                    onClick={() =>
-                      eliminarUsuario(
-                        user.id
-                      )
-                    }
-                  >
-                    Eliminar
-                  </button>
-
-                </td>
-
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Teléfono</th>
+                <th>Rol</th>
+                <th>Acciones</th>
               </tr>
 
-            ))}
+            </thead>
 
-          </tbody>
 
-        </table>
+            <tbody>
 
-      </div>
+              {users.map(usuario => (
+
+                <tr key={usuario.id}>
+
+                  <td>
+                    {usuario.id}
+                  </td>
+
+
+                  <td>
+                    {usuario.nombre}
+                  </td>
+
+
+                  <td>
+
+                    {usuario.email}
+
+                    {usuario.email ===
+                      currentUser?.email && (
+
+                      <span className="badge bg-success ms-2">
+                        Tú
+                      </span>
+
+                    )}
+
+                  </td>
+
+
+                  <td>
+                    {usuario.telefono || '-'}
+                  </td>
+
+
+                  <td>
+
+                    <select
+                      className="form-select"
+                      value={
+                        usuario.rol ||
+                        'CLIENTE'
+                      }
+                      disabled={
+                        usuario.email ===
+                        currentUser?.email
+                      }
+                      onChange={event =>
+                        cambiarRol(
+                          usuario,
+                          event.target.value
+                        )
+                      }
+                    >
+
+                      <option value="CLIENTE">
+                        CLIENTE
+                      </option>
+
+                      <option value="VENDEDOR">
+                        VENDEDOR
+                      </option>
+
+                      <option value="ADMIN">
+                        ADMIN
+                      </option>
+
+                    </select>
+
+                  </td>
+
+
+                  <td>
+
+                    <button
+                      className="btn btn-danger btn-sm"
+                      disabled={
+                        usuario.email ===
+                        currentUser?.email
+                      }
+                      onClick={() =>
+                        eliminarUsuario(
+                          usuario
+                        )
+                      }
+                    >
+                      Eliminar
+                    </button>
+
+                  </td>
+
+                </tr>
+
+              ))}
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      )}
 
     </main>
   )

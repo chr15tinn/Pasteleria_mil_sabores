@@ -1,4 +1,9 @@
-import { describe, expect, it, vi } from 'vitest'
+import {
+  describe,
+  expect,
+  it,
+  vi
+} from 'vitest'
 
 import {
   fireEvent,
@@ -10,78 +15,140 @@ import {
   MemoryRouter
 } from 'react-router-dom'
 
-import ProductCard from '../components/molecules/ProductCard'
+import ProductCard
+  from '../components/molecules/ProductCard'
+
+
+vi.mock(
+  '../context/AuthContext',
+  () => ({
+    useAuth: () => ({
+      user: {
+        id: 5,
+        nombre: 'Christian',
+        email:
+          'christian@duocuc.cl',
+        role:
+          'CLIENTE'
+      },
+
+      isAuthenticated:
+        true,
+
+      loading:
+        false
+    })
+  })
+)
+
 
 const product = {
-  id: 'TC001',
-  category: 'Tortas Cuadradas',
-  name: 'Torta Cuadrada de Chocolate',
-  price: 45000,
+
+  id: 1,
+
+  category:
+    'Tortas Cuadradas',
+
+  name:
+    'Torta Cuadrada de Chocolate',
+
+  price:
+    45000,
+
   description:
     'Deliciosa torta de chocolate.',
-  image: '',
-  stock: 10,
-  offer: false
+
+  image:
+    '',
+
+  stock:
+    10,
+
+  offer:
+    false
 }
 
-describe('ProductCard', () => {
 
-  it('renderiza los datos del producto', () => {
+describe(
+  'ProductCard',
+  () => {
 
-    render(
-      <MemoryRouter>
+    it(
+      'renderiza los datos del producto',
+      () => {
 
-        <ProductCard
-          product={product}
-          onAddToCart={() => {}}
-        />
+        render(
 
-      </MemoryRouter>
+          <MemoryRouter>
+
+            <ProductCard
+              product={
+                product
+              }
+              onAddToCart={
+                () => {}
+              }
+            />
+
+          </MemoryRouter>
+        )
+
+
+        expect(
+          screen.getByText(
+            'Torta Cuadrada de Chocolate'
+          )
+        ).toBeInTheDocument()
+
+
+        expect(
+          screen.getByText(
+            '$45.000 CLP'
+          )
+        ).toBeInTheDocument()
+      }
     )
 
-    expect(
-      screen.getByText(
-        'Torta Cuadrada de Chocolate'
-      )
-    ).toBeInTheDocument()
 
-    expect(
-      screen.getByText(
-        '$45.000 CLP'
-      )
-    ).toBeInTheDocument()
+    it(
+      'agrega el producto al presionar el botón',
+      () => {
 
-  })
+        const handleAdd =
+          vi.fn()
 
 
-  it('agrega el producto al presionar el botón', () => {
+        render(
 
-    const handleAdd =
-      vi.fn()
+          <MemoryRouter>
 
-    render(
-      <MemoryRouter>
+            <ProductCard
+              product={
+                product
+              }
+              onAddToCart={
+                handleAdd
+              }
+            />
 
-        <ProductCard
-          product={product}
-          onAddToCart={handleAdd}
-        />
+          </MemoryRouter>
+        )
 
-      </MemoryRouter>
+
+        fireEvent.click(
+          screen.getByText(
+            'Agregar al carrito'
+          )
+        )
+
+
+        expect(
+          handleAdd
+        ).toHaveBeenCalledWith(
+          product
+        )
+      }
     )
 
-    fireEvent.click(
-      screen.getByText(
-        'Agregar al carrito'
-      )
-    )
-
-    expect(
-      handleAdd
-    ).toHaveBeenCalledWith(
-      product
-    )
-
-  })
-
-})
+  }
+)

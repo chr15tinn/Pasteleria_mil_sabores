@@ -45,9 +45,9 @@ function ProductCard({ product, onAddToCart }) {
 
         <div className="mt-auto">
 
-          <p className="mb-2">
-            <Price value={product.price} />
-          </p>
+        <div className="mb-2">
+          <Price value={product.price} />
+        </div>
 
           <p className="small text-muted">
             Stock: {product.stock}

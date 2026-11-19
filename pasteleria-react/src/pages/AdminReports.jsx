@@ -1,21 +1,88 @@
-import { useMemo } from 'react'
+import {
+  useEffect,
+  useMemo,
+  useState
+} from 'react'
 
 import { productRepository } from '../repositories/productRepository'
+import { apiRequest } from '../services/api'
 
 function AdminReports() {
 
-  const products =
-    productRepository.getAll()
+  const [products, setProducts] =
+    useState([])
 
-  const users =
-    JSON.parse(
-      localStorage.getItem('usuarios')
-    ) || []
+  const [users, setUsers] =
+    useState([])
 
-  const orders =
-    JSON.parse(
-      localStorage.getItem('pedidos')
-    ) || []
+  const [orders, setOrders] =
+    useState([])
+
+  const [details, setDetails] =
+    useState([])
+
+  const [loading, setLoading] =
+    useState(true)
+
+  const [error, setError] =
+    useState('')
+
+
+  useEffect(() => {
+
+    async function loadReports() {
+
+      try {
+
+        setLoading(true)
+        setError('')
+
+        const [
+          productsData,
+          usersData,
+          ordersData,
+          detailsData
+        ] = await Promise.all([
+          productRepository.getAll(),
+          apiRequest('/usuarios'),
+          apiRequest('/boletas'),
+          apiRequest('/detalles-boleta')
+        ])
+
+
+        const adaptedProducts =
+          productsData.map(product => ({
+            id: product.id,
+            name: product.nombre,
+            stock: Number(product.stock || 0)
+          }))
+
+
+        setProducts(adaptedProducts)
+        setUsers(usersData)
+        setOrders(ordersData)
+        setDetails(detailsData)
+
+      } catch (error) {
+
+        console.error(
+          'Error al cargar reportes:',
+          error
+        )
+
+        setError(
+          'No fue posible cargar la información de reportes.'
+        )
+
+      } finally {
+
+        setLoading(false)
+      }
+    }
+
+    loadReports()
+
+  }, [])
 
 
   const totalSales =
@@ -27,21 +94,10 @@ function AdminReports() {
 
 
   const totalProductsSold =
-    orders.reduce(
-      (total, order) => {
-
-        const orderItems =
-          order.productos || []
-
-        const quantity =
-          orderItems.reduce(
-            (sum, item) =>
-              sum + Number(item.quantity || 0),
-            0
-          )
-
-        return total + quantity
-      },
+    details.reduce(
+      (total, detail) =>
+        total +
+        Number(detail.cantidad || 0),
       0
     )
 
@@ -58,28 +114,29 @@ function AdminReports() {
 
       const summary = {}
 
-      orders.forEach(order => {
 
-        const items =
-          order.productos || []
+      details.forEach(detail => {
 
-        items.forEach(item => {
+        const product =
+          detail.producto
 
-          if (!summary[item.id]) {
+        if (!product) {
+          return
+        }
 
-            summary[item.id] = {
-              id: item.id,
-              name: item.name,
-              quantity: 0
-            }
 
+        if (!summary[product.id]) {
+
+          summary[product.id] = {
+            id: product.id,
+            name: product.nombre,
+            quantity: 0
           }
+        }
 
-          summary[item.id].quantity +=
-            Number(item.quantity || 0)
 
-        })
-
+        summary[product.id].quantity +=
+          Number(detail.cantidad || 0)
       })
 
 
@@ -90,11 +147,26 @@ function AdminReports() {
             b.quantity - a.quantity
         )
 
-    }, [orders])
+    }, [details])
 
 
   const topProducts =
     productsSold.slice(0, 5)
+
+
+  if (loading) {
+
+    return (
+
+      <main className="container py-5">
+
+        <p className="text-center">
+          Cargando reportes...
+        </p>
+
+      </main>
+    )
+  }
 
 
   return (
@@ -119,6 +191,17 @@ function AdminReports() {
       </div>
 
 
+      {error && (
+
+        <div className="alert alert-danger">
+
+          {error}
+
+        </div>
+
+      )}
+
+
       <div className="row g-4 mb-5">
 
         <div className="col-12 col-md-6 col-xl-3">
@@ -133,10 +216,10 @@ function AdminReports() {
 
               <h3>
                 $
-                {
-                  totalSales
-                    .toLocaleString('es-CL')
-                }
+                {totalSales
+                  .toLocaleString(
+                    'es-CL'
+                  )}
               </h3>
 
             </div>
@@ -222,63 +305,59 @@ function AdminReports() {
             </h4>
 
 
-            {
-              topProducts.length === 0
-                ? (
+            {topProducts.length === 0 ? (
 
-                  <div className="alert alert-info">
-                    Todavía no existen ventas
-                    suficientes para generar
-                    este reporte.
-                  </div>
+              <div className="alert alert-info">
 
-                )
-                : (
+                Todavía no existen ventas
+                suficientes para generar
+                este reporte.
 
-                  <div className="table-responsive">
+              </div>
 
-                    <table className="table table-bordered">
+            ) : (
 
-                      <thead>
+              <div className="table-responsive">
 
-                        <tr>
-                          <th>Producto</th>
-                          <th>Unidades vendidas</th>
+                <table className="table table-bordered">
+
+                  <thead>
+
+                    <tr>
+                      <th>Producto</th>
+                      <th>Unidades vendidas</th>
+                    </tr>
+
+                  </thead>
+
+
+                  <tbody>
+
+                    {topProducts.map(
+                      product => (
+
+                        <tr key={product.id}>
+
+                          <td>
+                            {product.name}
+                          </td>
+
+                          <td>
+                            {product.quantity}
+                          </td>
+
                         </tr>
 
-                      </thead>
+                      )
+                    )}
 
+                  </tbody>
 
-                      <tbody>
+                </table>
 
-                        {
-                          topProducts.map(
-                            product => (
+              </div>
 
-                              <tr key={product.id}>
-
-                                <td>
-                                  {product.name}
-                                </td>
-
-                                <td>
-                                  {product.quantity}
-                                </td>
-
-                              </tr>
-
-                            )
-                          )
-                        }
-
-                      </tbody>
-
-                    </table>
-
-                  </div>
-
-                )
-            }
+            )}
 
           </div>
 
@@ -294,51 +373,45 @@ function AdminReports() {
             </h4>
 
 
-            {
-              criticalStock.length === 0
-                ? (
+            {criticalStock.length === 0 ? (
 
-                  <div className="alert alert-success">
+              <div className="alert alert-success">
 
-                    No existen productos
-                    con stock crítico.
+                No existen productos
+                con stock crítico.
 
-                  </div>
+              </div>
 
-                )
-                : (
+            ) : (
 
-                  <ul className="list-group">
+              <ul className="list-group">
 
-                    {
-                      criticalStock.map(
-                        product => (
+                {criticalStock.map(
+                  product => (
 
-                          <li
-                            key={product.id}
-                            className="list-group-item d-flex justify-content-between"
-                          >
+                    <li
+                      key={product.id}
+                      className="list-group-item d-flex justify-content-between"
+                    >
 
-                            <span>
-                              {product.name}
-                            </span>
+                      <span>
+                        {product.name}
+                      </span>
 
-                            <span className="badge bg-danger">
+                      <span className="badge bg-danger">
 
-                              {product.stock}
+                        {product.stock}
 
-                            </span>
+                      </span>
 
-                          </li>
+                    </li>
 
-                        )
-                      )
-                    }
+                  )
+                )}
 
-                  </ul>
+              </ul>
 
-                )
-            }
+            )}
 
           </div>
 

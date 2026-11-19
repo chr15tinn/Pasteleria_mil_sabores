@@ -1,15 +1,17 @@
 import {
-  productRepository 
-} from '../repositories/productRepository'
-
-import {
   createContext,
   useContext,
   useEffect,
   useState
 } from 'react'
 
+import {
+  productRepository
+} from '../repositories/productRepository'
+
+
 const CartContext = createContext()
+
 
 export function CartProvider({ children }) {
 
@@ -24,6 +26,10 @@ export function CartProvider({ children }) {
   })
 
 
+  /*
+   * Guardar carrito cada vez
+   * que cambie.
+   */
   useEffect(() => {
 
     localStorage.setItem(
@@ -34,81 +40,263 @@ export function CartProvider({ children }) {
   }, [cart])
 
 
- 
-function addToCart(product) {
-  const productoActual = productRepository.getById(product.id)
-  const stock = Number(productoActual?.stock ?? product.stock ?? 0)
+  /*
+   * Al iniciar la aplicación,
+   * actualizamos precio y stock
+   * usando los productos reales
+   * del backend.
+   */
+  useEffect(() => {
 
-  const existente = cart.find(item => item.id === product.id)
-  const cantidadActual = existente?.quantity || 0
+    async function actualizarCarrito() {
 
-  if (cantidadActual + 1 > stock) {
-    alert(`Stock insuficiente. Disponibles: ${Math.max(0, stock - cantidadActual)}`)
-    return false
-  }
+      try {
 
-  setCart(currentCart => {
-    const existingProduct = currentCart.find(
-      item => item.id === product.id
-    )
+        const productosBackend =
+          await productRepository.getAll()
 
-    if (existingProduct) {
-      return currentCart.map(item =>
-        item.id === product.id
-          ? { ...item, quantity: item.quantity + 1 }
-          : item
-      )
+
+        setCart(currentCart =>
+          currentCart
+            .map(item => {
+
+              const productoReal =
+                productosBackend.find(
+                  producto =>
+                    Number(producto.id) ===
+                    Number(item.id)
+                )
+
+
+              if (!productoReal) {
+                return null
+              }
+
+
+              const stockReal =
+                Number(
+                  productoReal.stock || 0
+                )
+
+
+              return {
+                ...item,
+
+                name:
+                  productoReal.nombre ||
+                  item.name,
+
+                price:
+                  Number(
+                    productoReal.precio ||
+                    item.price ||
+                    0
+                  ),
+
+                stock:
+                  stockReal,
+
+                quantity:
+                  Math.min(
+                    Number(
+                      item.quantity || 1
+                    ),
+                    stockReal
+                  )
+              }
+            })
+            .filter(
+              item =>
+                item !== null &&
+                item.stock > 0 &&
+                item.quantity > 0
+            )
+        )
+
+      } catch (error) {
+
+        console.error(
+          'No fue posible actualizar el carrito:',
+          error
+        )
+      }
     }
 
-    return [
-      ...currentCart,
-      { ...product, stock, quantity: 1 }
-    ]
-  })
 
-  return true
-}
+    actualizarCarrito()
+
+  }, [])
+
+
+  function addToCart(product) {
+
+    const stock =
+      Number(
+        product.stock || 0
+      )
+
+
+    const existente =
+      cart.find(
+        item =>
+          Number(item.id) ===
+          Number(product.id)
+      )
+
+
+    const cantidadActual =
+      Number(
+        existente?.quantity || 0
+      )
+
+
+    if (
+      cantidadActual + 1 >
+      stock
+    ) {
+
+      alert(
+        `Stock insuficiente. Disponibles: ${Math.max(
+          0,
+          stock - cantidadActual
+        )}`
+      )
+
+      return false
+    }
+
+
+    setCart(currentCart => {
+
+      const existingProduct =
+        currentCart.find(
+          item =>
+            Number(item.id) ===
+            Number(product.id)
+        )
+
+
+      if (existingProduct) {
+
+        return currentCart.map(
+          item =>
+            Number(item.id) ===
+            Number(product.id)
+              ? {
+                  ...item,
+                  stock,
+                  quantity:
+                    item.quantity + 1
+                }
+              : item
+        )
+      }
+
+
+      return [
+        ...currentCart,
+        {
+          ...product,
+          stock,
+          quantity: 1
+        }
+      ]
+    })
+
+
+    return true
+  }
 
 
   function removeFromCart(id) {
 
     setCart(currentCart =>
       currentCart.filter(
-        item => item.id !== id
+        item =>
+          Number(item.id) !==
+          Number(id)
       )
     )
   }
 
 
- 
-function updateQuantity(id, quantity) {
-  const nuevaCantidad = Number(quantity)
+  function updateQuantity(
+    id,
+    quantity
+  ) {
 
-  if (nuevaCantidad <= 0) {
-    removeFromCart(id)
-    return
-  }
+    const nuevaCantidad =
+      Number(quantity)
 
-  const producto = productRepository.getById(id)
-  const stock = Number(producto?.stock ?? 0)
 
-  if (!Number.isInteger(nuevaCantidad) || nuevaCantidad > stock) {
-    alert(`Stock insuficiente. Stock disponible: ${stock}`)
-    return
-  }
+    if (
+      !Number.isInteger(
+        nuevaCantidad
+      )
+    ) {
+      return
+    }
 
-  setCart(currentCart =>
-    currentCart.map(item =>
-      item.id === id
-        ? { ...item, quantity: nuevaCantidad }
-        : item
+
+    if (
+      nuevaCantidad <= 0
+    ) {
+
+      removeFromCart(id)
+
+      return
+    }
+
+
+    const item =
+      cart.find(
+        producto =>
+          Number(producto.id) ===
+          Number(id)
+      )
+
+
+    if (!item) {
+      return
+    }
+
+
+    const stock =
+      Number(
+        item.stock || 0
+      )
+
+
+    if (
+      nuevaCantidad > stock
+    ) {
+
+      alert(
+        `Stock insuficiente. Stock disponible: ${stock}`
+      )
+
+      return
+    }
+
+
+    setCart(currentCart =>
+      currentCart.map(
+        producto =>
+          Number(producto.id) ===
+          Number(id)
+            ? {
+                ...producto,
+                quantity:
+                  nuevaCantidad
+              }
+            : producto
+      )
     )
-  )
-}
-
+  }
 
 
   function clearCart() {
+
     setCart([])
   }
 
@@ -117,8 +305,8 @@ function updateQuantity(id, quantity) {
     cart.reduce(
       (total, item) =>
         total +
-        item.price *
-        item.quantity,
+        Number(item.price || 0) *
+        Number(item.quantity || 0),
       0
     )
 
@@ -127,7 +315,7 @@ function updateQuantity(id, quantity) {
     cart.reduce(
       (total, item) =>
         total +
-        item.quantity,
+        Number(item.quantity || 0),
       0
     )
 
@@ -155,5 +343,8 @@ function updateQuantity(id, quantity) {
 
 
 export function useCart() {
-  return useContext(CartContext)
+
+  return useContext(
+    CartContext
+  )
 }

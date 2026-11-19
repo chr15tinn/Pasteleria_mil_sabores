@@ -1,45 +1,28 @@
-import {
-  useState
-} from 'react'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-import {
-  useNavigate
-} from 'react-router-dom'
-
-import {
-  authService
-} from '../services/authService'
-
-import {
-  useAuth
-} from '../context/AuthContext'
+import { authService } from '../services/authService'
 
 
 function Register() {
 
-  const navigate =
-    useNavigate()
-
-  const { login } =
-    useAuth()
-
+  const navigate = useNavigate()
 
   const [form, setForm] =
     useState({
-
       nombre: '',
       email: '',
       password: '',
-      fechaNacimiento: '',
       telefono: '',
       direccion: '',
       codigoPromocional: ''
-
     })
-
 
   const [message, setMessage] =
     useState('')
+
+  const [loading, setLoading] =
+    useState(false)
 
 
   function handleChange(event) {
@@ -56,31 +39,52 @@ function Register() {
   }
 
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
 
     event.preventDefault()
 
-    const result =
-      authService.register(form)
+    setMessage('')
 
 
-    if (!result.success) {
+    try {
 
-      setMessage(
-        result.message
+      setLoading(true)
+
+      const result =
+        await authService.register(form)
+
+
+      if (!result.success) {
+
+        setMessage(
+          result.message
+        )
+
+        return
+      }
+
+
+      alert(
+        '✅ Usuario registrado correctamente. Ahora puedes iniciar sesión.'
       )
 
-      return
+      navigate('/login')
+
+    } catch (error) {
+
+      console.error(
+        'Error al registrar usuario:',
+        error
+      )
+
+      setMessage(
+        'No fue posible crear la cuenta.'
+      )
+
+    } finally {
+
+      setLoading(false)
     }
-
-
-    login(result.user)
-
-    alert(
-      '✅ Usuario registrado correctamente.'
-    )
-
-    navigate('/')
   }
 
 
@@ -122,9 +126,7 @@ function Register() {
 
           <div className="mb-3">
 
-            <label
-              className="form-label"
-            >
+            <label className="form-label">
               Nombre
             </label>
 
@@ -141,10 +143,8 @@ function Register() {
 
           <div className="mb-3">
 
-            <label
-              className="form-label"
-            >
-              Correo
+            <label className="form-label">
+              Correo institucional
             </label>
 
             <input
@@ -153,17 +153,20 @@ function Register() {
               name="email"
               value={form.email}
               onChange={handleChange}
+              placeholder="ejemplo@duocuc.cl"
               required
             />
+
+            <small className="text-muted">
+              Se permiten correos Duoc.
+            </small>
 
           </div>
 
 
           <div className="mb-3">
 
-            <label
-              className="form-label"
-            >
+            <label className="form-label">
               Contraseña
             </label>
 
@@ -173,6 +176,7 @@ function Register() {
               name="password"
               value={form.password}
               onChange={handleChange}
+              minLength="6"
               required
             />
 
@@ -181,37 +185,17 @@ function Register() {
 
           <div className="mb-3">
 
-            <label
-              className="form-label"
-            >
-              Fecha de nacimiento
-            </label>
-
-            <input
-              type="date"
-              className="form-control"
-              name="fechaNacimiento"
-              value={form.fechaNacimiento}
-              onChange={handleChange}
-              required
-            />
-
-          </div>
-
-
-          <div className="mb-3">
-
-            <label
-              className="form-label"
-            >
+            <label className="form-label">
               Teléfono
             </label>
 
             <input
+              type="tel"
               className="form-control"
               name="telefono"
               value={form.telefono}
               onChange={handleChange}
+              placeholder="Ej: 912345678"
             />
 
           </div>
@@ -219,9 +203,7 @@ function Register() {
 
           <div className="mb-3">
 
-            <label
-              className="form-label"
-            >
+            <label className="form-label">
               Dirección
             </label>
 
@@ -237,18 +219,14 @@ function Register() {
 
           <div className="mb-4">
 
-            <label
-              className="form-label"
-            >
+            <label className="form-label">
               Código promocional
             </label>
 
             <input
               className="form-control"
               name="codigoPromocional"
-              value={
-                form.codigoPromocional
-              }
+              value={form.codigoPromocional}
               onChange={handleChange}
               placeholder="Ej: FELICES50"
             />
@@ -259,8 +237,13 @@ function Register() {
           <button
             className="btn btn-dark w-100"
             type="submit"
+            disabled={loading}
           >
-            Registrarme
+
+            {loading
+              ? 'Creando cuenta...'
+              : 'Registrarme'}
+
           </button>
 
         </form>

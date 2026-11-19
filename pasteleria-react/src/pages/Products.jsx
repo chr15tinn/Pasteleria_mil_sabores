@@ -7,10 +7,11 @@ import { productRepository } from '../repositories/productRepository'
 import { useCart } from '../context/CartContext'
 
 function Products() {
-
   const [products, setProducts] = useState([])
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('Todas')
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   const [searchParams] = useSearchParams()
 
@@ -21,19 +22,66 @@ function Products() {
 
 
   useEffect(() => {
+    async function loadProducts() {
+      try {
+        setLoading(true)
+        setError('')
 
-    const data =
-      productRepository.getAll()
+        const data =
+          await productRepository.getAll()
 
-    setProducts(data)
+        const adaptedProducts =
+          data.map(product => ({
+            id: product.id,
+
+            name:
+              product.nombre,
+
+            description:
+              product.descripcion || '',
+
+            price:
+              Number(product.precio),
+
+            stock:
+              product.stock,
+
+            image:
+              product.imagen,
+
+            offer:
+              product.oferta,
+
+            category:
+              product.categoria?.nombre || 'Sin categoría',
+
+            categoryId:
+              product.categoria?.id,
+          }))
+
+        setProducts(adaptedProducts)
+
+      } catch (error) {
+        console.error(
+          'Error al cargar productos:',
+          error
+        )
+
+        setError(
+          'No fue posible cargar los productos.'
+        )
+
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadProducts()
 
   }, [])
 
 
-  // Si llegamos desde la página Categorías,
-  // seleccionamos automáticamente esa categoría.
   useEffect(() => {
-
     if (categoriaUrl) {
       setCategory(categoriaUrl)
     } else {
@@ -44,7 +92,6 @@ function Products() {
 
 
   function handleAddToCart(product) {
-
     addToCart(product)
 
     alert(
@@ -97,8 +144,20 @@ function Products() {
     })
 
 
-  return (
+  if (loading) {
+    return (
+      <main className="container py-5">
+        <div className="text-center">
+          <p>
+            Cargando productos...
+          </p>
+        </div>
+      </main>
+    )
+  }
 
+
+  return (
     <main className="container py-5">
 
       <div className="text-center mb-5">
@@ -117,6 +176,13 @@ function Products() {
         </div>
 
       </div>
+
+
+      {error && (
+        <div className="alert alert-danger">
+          {error}
+        </div>
+      )}
 
 
       <div className="row mb-4">

@@ -1,276 +1,57 @@
-import { initialUsers } from '../data/users'
+import { apiRequest } from './api'
 
-const USERS_KEY = 'usuarios'
+const USER_KEY = 'usuario'
+const TOKEN_KEY = 'token'
 
 
-function getUsers() {
-
-  let users =
-    JSON.parse(
-      localStorage.getItem(USERS_KEY)
-    ) || []
-
-
-  const initialUsersMissing =
-    initialUsers.filter(
-      initialUser =>
-        !users.some(
-          user =>
-            user.email.toLowerCase() ===
-            initialUser.email.toLowerCase()
-        )
-    )
-
-
-  if (initialUsersMissing.length > 0) {
-
-    users = [
-      ...initialUsersMissing,
-      ...users
-    ]
-
-    localStorage.setItem(
-      USERS_KEY,
-      JSON.stringify(users)
-    )
-  }
-
-
-  return users
-}
-
-
-function calculateAge(
-  birthDate
-) {
-
-  const today = new Date()
-  const birth = new Date(birthDate)
-
-  let age =
-    today.getFullYear() -
-    birth.getFullYear()
-
-  const month =
-    today.getMonth() -
-    birth.getMonth()
-
-  if (
-    month < 0 ||
-    (
-      month === 0 &&
-      today.getDate() <
-      birth.getDate()
-    )
-  ) {
-    age--
-  }
-
-  return age
-}
-
-
-function isBirthdayToday(
-  birthDate
-) {
-
-  if (!birthDate) {
-    return false
-  }
-
-  const today = new Date()
-  const birth = new Date(
-    birthDate + 'T00:00:00'
-  )
-
-  return (
-    today.getDate() ===
-      birth.getDate() &&
-
-    today.getMonth() ===
-      birth.getMonth()
-  )
-}
-
-function isDuocEmail(email) {
-
-  const normalized =
-    email.toLowerCase().trim()
-
-  return (
-    normalized.endsWith('@duocuc.cl') ||
-    normalized.endsWith('@duoc.cl') ||
-    normalized.endsWith('@profesor.duocuc.cl') ||
-    normalized.endsWith('@profesor.duoc.cl')
-  )
-}
-
-
-function isAllowedEmailDomain(email) {
-
-  const normalized =
-    email.toLowerCase().trim()
-
-  const allowedDomains = [
-    '@duocuc.cl',
-    '@duoc.cl',
-    '@profesor.duocuc.cl',
-    '@profesor.duoc.cl'
-  ]
-
-  return allowedDomains.some(
-    domain =>
-      normalized.endsWith(domain)
-  )
-}
-
-
-function register(data) {
-
-  const users = getUsers()
-
-  const existingUser =
-    users.find(
-      user =>
-        user.email.toLowerCase() ===
-        data.email.toLowerCase()
-    )
-
-      if (
-    !isAllowedEmailDomain(
-      data.email
-    )
-  ) {
-
-    return {
-      success: false,
-      message:
-        'Solo se permiten correos institucionales Duoc.'
-    }
-  }
-
-  if (existingUser) {
-
-    return {
-      success: false,
-      message:
-        'El correo ya se encuentra registrado.'
-    }
-  }
-
-
-  const age =
-    calculateAge(
-      data.fechaNacimiento
-    )
-
-  const duoc =
-    isDuocEmail(data.email)
-
-  const birthday =
-    isBirthdayToday(
-      data.fechaNacimiento
-    )
-
-
-  let discount = 0
-  let discountReason = null
-
-  if (age > 50) {
-
-    discount = 50
-    discountReason =
-      'Descuento mayor de 50 años'
-
-  } else if (
-    data.codigoPromocional
-      ?.trim()
-      .toUpperCase() ===
-    'FELICES50'
-  ) {
-
-    discount = 10
-    discountReason =
-      'Descuento aniversario Pastelería 1000 Sabores - código FELICES50'
-  }
-
-
-  const newUser = {
-
-    id: Date.now(),
-
-    role: 'CLIENTE',
-
-    nombre:
-      data.nombre.trim(),
-
-    email:
-      data.email.trim(),
-
-    password:
-      data.password,
-
-    fechaNacimiento:
-      data.fechaNacimiento,
-
-    telefono:
-      data.telefono || '',
-
-    direccion:
-      data.direccion || '',
-
-    beneficios: {
-
-      descuentoAplicable:
-        discount,
-
-      motivoDescuento:
-        discountReason,
-
-      esEstudianteDuoc:
-        duoc,
-
-      tortaGratis:
-        duoc && birthday
-
-    }
-
-  }
-
-
-  users.push(newUser)
-
-  localStorage.setItem(
-    USERS_KEY,
-    JSON.stringify(users)
-  )
-
-
-  return {
-    success: true,
-    user: newUser
-  }
-}
-
-
-function authenticate(
+async function authenticate(
   email,
   password
 ) {
 
-  const users =
-    getUsers()
+  try {
 
-  const user =
-    users.find(
-      item =>
-        item.email.toLowerCase() ===
-          email.toLowerCase() &&
-        item.password === password
+    const response =
+      await apiRequest(
+        '/auth/login',
+        {
+          method: 'POST',
+
+          body: JSON.stringify({
+            email,
+            password
+          })
+        }
+      )
+
+
+    const user = {
+      id: response.id,
+      nombre: response.nombre,
+      email: response.email,
+      role: response.rol,
+      telefono: response.telefono
+    }
+
+
+    localStorage.setItem(
+      TOKEN_KEY,
+      response.token
+    )
+
+    localStorage.setItem(
+      USER_KEY,
+      JSON.stringify(user)
     )
 
 
-  if (!user) {
+    return {
+      success: true,
+      user,
+      token: response.token
+    }
+
+  } catch (error) {
 
     return {
       success: false,
@@ -278,25 +59,126 @@ function authenticate(
         'Correo o contraseña incorrectos.'
     }
   }
+}
 
 
-    const authenticatedUser = {
-    ...user,
-    role: user.role || 'CLIENTE'
-    }
+async function register(form) {
+
+  try {
+
+    const response =
+      await apiRequest(
+        '/auth/register',
+        {
+          method: 'POST',
+
+          body: JSON.stringify({
+            nombre: form.nombre,
+            email: form.email,
+            password: form.password,
+            telefono: form.telefono
+          })
+        }
+      )
+
 
     return {
-    success: true,
-    user: authenticatedUser
+      success: true,
+      user: response
     }
+
+  } catch (error) {
+
+    if (error.status === 409) {
+
+      return {
+        success: false,
+        message:
+          'Ese correo ya se encuentra registrado.'
+      }
+    }
+
+
+    if (error.status === 400) {
+
+      return {
+        success: false,
+        message:
+          'Debes usar un correo institucional Duoc válido.'
+      }
+    }
+
+
+    return {
+      success: false,
+      message:
+        'No fue posible crear la cuenta.'
+    }
+  }
+}
+
+
+function logout() {
+
+  localStorage.removeItem(
+    TOKEN_KEY
+  )
+
+  localStorage.removeItem(
+    USER_KEY
+  )
+}
+
+
+function getCurrentUser() {
+
+  const storedUser =
+    localStorage.getItem(
+      USER_KEY
+    )
+
+
+  if (!storedUser) {
+    return null
+  }
+
+
+  try {
+
+    return JSON.parse(
+      storedUser
+    )
+
+  } catch {
+
+    return null
+  }
+}
+
+
+function getToken() {
+
+  return localStorage.getItem(
+    TOKEN_KEY
+  )
+}
+
+
+function isAuthenticated() {
+
+  return Boolean(
+    getToken() &&
+    getCurrentUser()
+  )
 }
 
 
 export const authService = {
-  register,
+
   authenticate,
-  isDuocEmail,
-  isAllowedEmailDomain,
-  isBirthdayToday,
-  calculateAge
+  register,
+  logout,
+  getCurrentUser,
+  getToken,
+  isAuthenticated
 }

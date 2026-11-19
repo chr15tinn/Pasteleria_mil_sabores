@@ -2,14 +2,20 @@ import {
   beforeEach,
   describe,
   expect,
-  it
+  it,
+  vi
 } from 'vitest'
 
 import {
   fireEvent,
   render,
-  screen
+  screen,
+  waitFor
 } from '@testing-library/react'
+
+import {
+  productRepository
+} from '../repositories/productRepository'
 
 import {
   CartProvider,
@@ -17,12 +23,28 @@ import {
 } from '../context/CartContext'
 
 
+vi.mock(
+  '../repositories/productRepository',
+  () => ({
+    productRepository: {
+      getAll: vi.fn()
+    }
+  })
+)
+
+
 const producto = {
-  id: 'TC001',
+  id: 1,
   name: 'Torta Cuadrada de Chocolate',
   price: 45000,
-  stock: 10,
-  quantity: 1
+  stock: 10
+}
+
+const productoBackend = {
+  id: 1,
+  nombre: 'Torta Cuadrada de Chocolate',
+  precio: 45000,
+  stock: 10
 }
 
 
@@ -98,206 +120,292 @@ function TestComponent() {
 }
 
 
+async function renderCart() {
+
+  productRepository
+    .getAll
+    .mockResolvedValue([
+      productoBackend
+    ])
+
+
+  render(
+    <CartProvider>
+      <TestComponent />
+    </CartProvider>
+  )
+
+
+  await waitFor(() => {
+
+    expect(
+      productRepository.getAll
+    ).toHaveBeenCalled()
+
+  })
+}
+
+
 describe('CartContext', () => {
 
   beforeEach(() => {
+
     localStorage.clear()
+
+    vi.clearAllMocks()
   })
 
 
-  it('inicia con el carrito vacío', () => {
+  it(
+    'inicia con el carrito vacío',
+    async () => {
 
-    render(
-      <CartProvider>
-        <TestComponent />
-      </CartProvider>
-    )
+      await renderCart()
 
 
-    expect(
-      screen.getByTestId(
-        'cantidad-productos'
+      expect(
+        screen.getByTestId(
+          'cantidad-productos'
+        )
+      ).toHaveTextContent('0')
+
+
+      expect(
+        screen.getByTestId(
+          'total-items'
+        )
+      ).toHaveTextContent('0')
+    }
+  )
+
+
+  it(
+    'agrega un producto al carrito',
+    async () => {
+
+      await renderCart()
+
+
+      fireEvent.click(
+        screen.getByText(
+          'Agregar'
+        )
       )
-    ).toHaveTextContent('0')
 
 
-    expect(
-      screen.getByTestId(
-        'total-items'
+      await waitFor(() => {
+
+        expect(
+          screen.getByTestId(
+            'cantidad-productos'
+          )
+        ).toHaveTextContent('1')
+
+      })
+
+
+      expect(
+        screen.getByTestId(
+          'total-items'
+        )
+      ).toHaveTextContent('1')
+    }
+  )
+
+
+  it(
+    'calcula correctamente el subtotal',
+    async () => {
+
+      await renderCart()
+
+
+      fireEvent.click(
+        screen.getByText(
+          'Agregar'
+        )
       )
-    ).toHaveTextContent('0')
-
-  })
 
 
-  it('agrega un producto al carrito', () => {
+      await waitFor(() => {
 
-    render(
-      <CartProvider>
-        <TestComponent />
-      </CartProvider>
-    )
+        expect(
+          screen.getByTestId(
+            'subtotal'
+          )
+        ).toHaveTextContent(
+          '45000'
+        )
+
+      })
+    }
+  )
 
 
-    fireEvent.click(
-      screen.getByText(
-        'Agregar'
+  it(
+    'actualiza la cantidad de un producto',
+    async () => {
+
+      await renderCart()
+
+
+      fireEvent.click(
+        screen.getByText(
+          'Agregar'
+        )
       )
-    )
 
 
-    expect(
-      screen.getByTestId(
-        'cantidad-productos'
+      /*
+       * Esperamos a que React termine
+       * de agregar el producto antes
+       * de cambiar su cantidad.
+       */
+      await waitFor(() => {
+
+        expect(
+          screen.getByTestId(
+            'total-items'
+          )
+        ).toHaveTextContent('1')
+
+      })
+
+
+      fireEvent.click(
+        screen.getByText(
+          'Cambiar cantidad'
+        )
       )
-    ).toHaveTextContent('1')
 
 
-    expect(
-      screen.getByTestId(
-        'total-items'
+      await waitFor(() => {
+
+        expect(
+          screen.getByTestId(
+            'total-items'
+          )
+        ).toHaveTextContent('3')
+
+      })
+
+
+      expect(
+        screen.getByTestId(
+          'subtotal'
+        )
+      ).toHaveTextContent(
+        '135000'
       )
-    ).toHaveTextContent('1')
-
-  })
-
-
-  it('calcula correctamente el subtotal', () => {
-
-    render(
-      <CartProvider>
-        <TestComponent />
-      </CartProvider>
-    )
+    }
+  )
 
 
-    fireEvent.click(
-      screen.getByText(
-        'Agregar'
+  it(
+    'elimina un producto del carrito',
+    async () => {
+
+      await renderCart()
+
+
+      fireEvent.click(
+        screen.getByText(
+          'Agregar'
+        )
       )
-    )
 
 
-    expect(
-      screen.getByTestId(
-        'subtotal'
+      /*
+       * Primero comprobamos que realmente
+       * haya sido agregado.
+       */
+      await waitFor(() => {
+
+        expect(
+          screen.getByTestId(
+            'cantidad-productos'
+          )
+        ).toHaveTextContent('1')
+
+      })
+
+
+      fireEvent.click(
+        screen.getByText(
+          'Eliminar'
+        )
       )
-    ).toHaveTextContent(
-      '45000'
-    )
-
-  })
 
 
-  it('actualiza la cantidad de un producto', () => {
+      await waitFor(() => {
 
-    render(
-      <CartProvider>
-        <TestComponent />
-      </CartProvider>
-    )
+        expect(
+          screen.getByTestId(
+            'cantidad-productos'
+          )
+        ).toHaveTextContent('0')
+
+      })
 
 
-    fireEvent.click(
-      screen.getByText(
-        'Agregar'
+      expect(
+        screen.getByTestId(
+          'total-items'
+        )
+      ).toHaveTextContent('0')
+    }
+  )
+
+
+  it(
+    'vacía completamente el carrito',
+    async () => {
+
+      await renderCart()
+
+
+      fireEvent.click(
+        screen.getByText(
+          'Agregar'
+        )
       )
-    )
 
 
-    fireEvent.click(
-      screen.getByText(
-        'Cambiar cantidad'
+      await waitFor(() => {
+
+        expect(
+          screen.getByTestId(
+            'total-items'
+          )
+        ).toHaveTextContent('1')
+
+      })
+
+
+      fireEvent.click(
+        screen.getByText(
+          'Vaciar carrito'
+        )
       )
-    )
 
 
-    expect(
-      screen.getByTestId(
-        'total-items'
-      )
-    ).toHaveTextContent('3')
+      await waitFor(() => {
+
+        expect(
+          screen.getByTestId(
+            'cantidad-productos'
+          )
+        ).toHaveTextContent('0')
+
+      })
 
 
-    expect(
-      screen.getByTestId(
-        'subtotal'
-      )
-    ).toHaveTextContent(
-      '135000'
-    )
-
-  })
-
-
-  it('elimina un producto del carrito', () => {
-
-    render(
-      <CartProvider>
-        <TestComponent />
-      </CartProvider>
-    )
-
-
-    fireEvent.click(
-      screen.getByText(
-        'Agregar'
-      )
-    )
-
-
-    fireEvent.click(
-      screen.getByText(
-        'Eliminar'
-      )
-    )
-
-
-    expect(
-      screen.getByTestId(
-        'cantidad-productos'
-      )
-    ).toHaveTextContent('0')
-
-  })
-
-
-  it('vacía completamente el carrito', () => {
-
-    render(
-      <CartProvider>
-        <TestComponent />
-      </CartProvider>
-    )
-
-
-    fireEvent.click(
-      screen.getByText(
-        'Agregar'
-      )
-    )
-
-
-    fireEvent.click(
-      screen.getByText(
-        'Vaciar carrito'
-      )
-    )
-
-
-    expect(
-      screen.getByTestId(
-        'cantidad-productos'
-      )
-    ).toHaveTextContent('0')
-
-
-    expect(
-      screen.getByTestId(
-        'total-items'
-      )
-    ).toHaveTextContent('0')
-
-  })
+      expect(
+        screen.getByTestId(
+          'total-items'
+        )
+      ).toHaveTextContent('0')
+    }
+  )
 
 })

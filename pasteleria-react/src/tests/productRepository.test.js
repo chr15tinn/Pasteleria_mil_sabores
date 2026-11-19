@@ -2,162 +2,268 @@ import {
   beforeEach,
   describe,
   expect,
-  it
+  it,
+  vi
 } from 'vitest'
+
+import {
+  apiRequest
+} from '../services/api'
 
 import {
   productRepository
 } from '../repositories/productRepository'
 
 
-describe('productRepository', () => {
-
-  beforeEach(() => {
-    localStorage.clear()
+vi.mock(
+  '../services/api',
+  () => ({
+    apiRequest: vi.fn()
   })
+)
 
 
-  it('obtiene la lista de productos', () => {
+describe(
+  'productRepository',
+  () => {
 
-    const products =
-      productRepository.getAll()
+    beforeEach(() => {
 
-    expect(
-      Array.isArray(products)
-    ).toBe(true)
-
-    expect(
-      products.length
-    ).toBeGreaterThan(0)
-
-  })
+      vi.clearAllMocks()
+    })
 
 
-  it('crea un nuevo producto', () => {
+    it(
+      'obtiene la lista de productos',
+      async () => {
 
-    const nuevoProducto = {
-      id: 'TEST001',
-      category: 'Pruebas',
-      name: 'Torta de Prueba',
-      price: 10000,
-      description:
-        'Producto creado para pruebas',
-      image: '',
-      stock: 10,
-      offer: false
-    }
-
-
-    productRepository.create(
-      nuevoProducto
-    )
-
-
-    const productoGuardado =
-      productRepository.getById(
-        'TEST001'
-      )
+        const productosBackend = [
+          {
+            id: 1,
+            nombre:
+              'Torta Cuadrada de Chocolate',
+            precio: 45000,
+            stock: 10
+          },
+          {
+            id: 2,
+            nombre:
+              'Torta Cuadrada de Frutas',
+            precio: 50000,
+            stock: 8
+          }
+        ]
 
 
-    expect(
-      productoGuardado
-    ).toBeTruthy()
+        apiRequest.mockResolvedValue(
+          productosBackend
+        )
 
 
-    expect(
-      productoGuardado.name
-    ).toBe(
-      'Torta de Prueba'
-    )
-
-  })
+        const products =
+          await productRepository
+            .getAll()
 
 
-  it('actualiza un producto existente', () => {
-
-    const producto = {
-      id: 'TEST002',
-      category: 'Pruebas',
-      name: 'Producto Original',
-      price: 10000,
-      description: 'Prueba',
-      image: '',
-      stock: 10,
-      offer: false
-    }
+        expect(
+          Array.isArray(products)
+        ).toBe(true)
 
 
-    productRepository.create(
-      producto
-    )
+        expect(
+          products
+        ).toHaveLength(2)
 
 
-    productRepository.update(
-      'TEST002',
-      {
-        ...producto,
-        name:
-          'Producto Modificado',
-        price: 15000
+        expect(
+          apiRequest
+        ).toHaveBeenCalledWith(
+          '/productos'
+        )
       }
     )
 
 
-    const productoActualizado =
-      productRepository.getById(
-        'TEST002'
-      )
+    it(
+      'crea un nuevo producto',
+      async () => {
+
+        const nuevoProducto = {
+
+          nombre:
+            'Torta de Prueba',
+
+          descripcion:
+            'Producto creado para pruebas',
+
+          precio:
+            10000,
+
+          stock:
+            10,
+
+          imagen:
+            '',
+
+          oferta:
+            false,
+
+          categoria: {
+            id: 1
+          }
+        }
 
 
-    expect(
-      productoActualizado.name
-    ).toBe(
-      'Producto Modificado'
+        const productoGuardado = {
+          id: 20,
+          ...nuevoProducto
+        }
+
+
+        apiRequest.mockResolvedValue(
+          productoGuardado
+        )
+
+
+        const resultado =
+          await productRepository
+            .create(
+              nuevoProducto
+            )
+
+
+        expect(
+          resultado.nombre
+        ).toBe(
+          'Torta de Prueba'
+        )
+
+
+        expect(
+          resultado.id
+        ).toBe(20)
+
+
+        expect(
+          apiRequest
+        ).toHaveBeenCalledWith(
+          '/productos',
+          {
+            method: 'POST',
+
+            body:
+              JSON.stringify(
+                nuevoProducto
+              )
+          }
+        )
+      }
     )
 
 
-    expect(
-      productoActualizado.price
-    ).toBe(15000)
+    it(
+      'actualiza un producto existente',
+      async () => {
 
-  })
+        const productoActualizado = {
+
+          id: 1,
+
+          nombre:
+            'Producto Modificado',
+
+          descripcion:
+            'Prueba',
+
+          precio:
+            15000,
+
+          stock:
+            10,
+
+          imagen:
+            '',
+
+          oferta:
+            false,
+
+          categoria: {
+            id: 1
+          }
+        }
 
 
-  it('elimina un producto', () => {
-
-    const producto = {
-      id: 'TEST003',
-      category: 'Pruebas',
-      name:
-        'Producto a eliminar',
-      price: 5000,
-      description: 'Prueba',
-      image: '',
-      stock: 5,
-      offer: false
-    }
+        apiRequest.mockResolvedValue(
+          productoActualizado
+        )
 
 
-    productRepository.create(
-      producto
+        const resultado =
+          await productRepository
+            .update(
+              1,
+              productoActualizado
+            )
+
+
+        expect(
+          resultado.nombre
+        ).toBe(
+          'Producto Modificado'
+        )
+
+
+        expect(
+          resultado.precio
+        ).toBe(15000)
+
+
+        expect(
+          apiRequest
+        ).toHaveBeenCalledWith(
+          '/productos/1',
+          {
+            method: 'PUT',
+
+            body:
+              JSON.stringify(
+                productoActualizado
+              )
+          }
+        )
+      }
     )
 
 
-    productRepository.remove(
-      'TEST003'
+    it(
+      'elimina un producto',
+      async () => {
+
+        apiRequest.mockResolvedValue(
+          null
+        )
+
+
+        const resultado =
+          await productRepository
+            .remove(1)
+
+
+        expect(
+          resultado
+        ).toBe(true)
+
+
+        expect(
+          apiRequest
+        ).toHaveBeenCalledWith(
+          '/productos/1',
+          {
+            method: 'DELETE'
+          }
+        )
+      }
     )
 
-
-    const productoEliminado =
-      productRepository.getById(
-        'TEST003'
-      )
-
-
-    expect(
-      productoEliminado
-    ).toBeUndefined()
-
-  })
-
-})
+  }
+)

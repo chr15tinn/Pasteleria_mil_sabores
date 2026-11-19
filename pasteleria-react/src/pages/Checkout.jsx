@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 import { paymentService } from '../services/paymentService'
+import { apiRequest } from '../services/api'
 
 
 function Checkout() {
@@ -25,7 +26,6 @@ function Checkout() {
   /*
     Los precios publicados ya incluyen IVA.
 
-    Por eso:
     Total = subtotal
     Neto = Total / 1.19
     IVA = Total - Neto
@@ -69,8 +69,11 @@ function Checkout() {
 
   const [message, setMessage] =
     useState('')
-  
+
   const [simulateFailure, setSimulateFailure] =
+    useState(false)
+
+  const [processing, setProcessing] =
     useState(false)
 
 
@@ -88,47 +91,25 @@ function Checkout() {
   }
 
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
 
     event.preventDefault()
 
 
-    if (cart.length === 0) {
+    if (!isAuthenticated || !user) {
 
       setMessage(
-        '⚠️ Tu carrito está vacío.'
+        '⚠️ Debes iniciar sesión para realizar la compra.'
       )
 
       return
     }
 
 
-    const productosActuales =
-      JSON.parse(
-        localStorage.getItem('products') || '[]'
-      )
-
-
-    const stockInsuficiente =
-      cart.find(item => {
-
-        const producto =
-          productosActuales.find(
-            p => p.id === item.id
-          )
-
-        return (
-          !producto ||
-          item.quantity >
-            Number(producto.stock || 0)
-        )
-      })
-
-
-    if (stockInsuficiente) {
+    if (cart.length === 0) {
 
       setMessage(
-        `⚠️ Stock insuficiente para ${stockInsuficiente.name}. Ajusta la cantidad antes de comprar.`
+        '⚠️ Tu carrito está vacío.'
       )
 
       return
@@ -154,137 +135,263 @@ function Checkout() {
       return
     }
 
+
+    /*
+     * Primero simulamos el pago.
+     */
     const paymentResult =
-  paymentService.processPayment({
-    medioPago:
-      form.medioPago,
+      paymentService.processPayment({
 
-    total:
-      subtotal,
+        medioPago:
+          form.medioPago,
 
-    simulateFailure
-  })
+        total:
+          subtotal,
 
-
-if (!paymentResult.success) {
-
-  localStorage.setItem(
-    'ultimoPagoFallido',
-    JSON.stringify({
-      mensaje:
-        paymentResult.message,
-
-      total:
-        subtotal,
-
-      medioPago:
-        form.medioPago,
-
-      fecha:
-        new Date()
-          .toLocaleString('es-CL')
-    })
-  )
-
-  navigate('/compra-fallida')
-
-  return
-}
-
-    const numeroPedido =
-      'PED-' +
-      Date.now()
-        .toString()
-        .slice(-6)
+        simulateFailure
+      })
 
 
-    const pedido = {
+    /*
+     * Si el pago falla,
+     * NO se crea ninguna compra.
+     */
+    if (!paymentResult.success) {
 
-      numeroPedido,
+      localStorage.setItem(
+        'ultimoPagoFallido',
+        JSON.stringify({
 
-      usuarioId:
-        user?.id || null,
+          mensaje:
+            paymentResult.message,
 
-      nombre:
-        form.nombre,
+          total:
+            subtotal,
 
-      email:
-        form.email,
+          medioPago:
+            form.medioPago,
 
-      telefono:
-        form.telefono,
+          fecha:
+            new Date()
+              .toLocaleString('es-CL')
+        })
+      )
 
-      direccion:
-        form.direccion,
 
-      descripcion:
-        form.descripcion,
+      navigate('/compra-fallida')
 
-      region:
-        form.region,
-
-      comuna:
-        form.comuna,
-
-      codigoPostal:
-        form.codigoPostal,
-
-      fechaEntrega:
-        form.fechaEntrega,
-
-      medioPago:
-        form.medioPago,
-
-      productos:
-        cart,
-
-      neto:
-        Math.round(neto),
-
-      iva:
-        Math.round(iva),
-
-      subtotal:
-        subtotal,
-
-      total:
-        subtotal,
-
-      estado:
-        'Pedido recibido',
-
-      fecha:
-        new Date()
-          .toLocaleString('es-CL')
-
+      return
     }
 
 
-    localStorage.setItem(
-      'ultimaCompra',
-      JSON.stringify(pedido)
-    )
+    try {
+
+      setProcessing(true)
+      setMessage('')
 
 
-    const pedidos =
-      JSON.parse(
-        localStorage.getItem('pedidos')
-      ) || []
+      /*
+       * Dirección completa que
+       * guardaremos en la boleta.
+       */
+      const direccionCompleta = [
+
+        form.direccion,
+
+        form.descripcion
+          ? `Referencia: ${form.descripcion}`
+          : null,
+
+        form.comuna,
+
+        form.region,
+
+        `CP: ${form.codigoPostal}`,
+
+        `Entrega: ${form.fechaEntrega}`
+
+      ]
+        .filter(Boolean)
+        .join(', ')
 
 
-    pedidos.push(pedido)
+      /*
+       * Datos enviados al backend.
+       */
+      const compraRequest = {
+
+        direccion:
+          direccionCompleta,
+
+        medioPago:
+          form.medioPago,
+
+        productos:
+          cart.map(item => ({
+
+            productoId:
+              item.id,
+
+            cantidad:
+              Number(item.quantity)
+
+          }))
+      }
 
 
-    localStorage.setItem(
-      'pedidos',
-      JSON.stringify(pedidos)
-    )
+      /*
+       * Crear realmente la compra
+       * en Spring Boot / MySQL.
+       */
+      const boleta =
+        await apiRequest(
+          '/compras',
+          {
+            method: 'POST',
+
+            body:
+              JSON.stringify(
+                compraRequest
+              )
+          }
+        )
 
 
-    clearCart()
+      /*
+       * Dejamos solamente la última
+       * compra en localStorage para
+       * mostrar la página de éxito.
+       *
+       * La compra oficial queda
+       * almacenada en MySQL.
+       */
+      const pedido = {
+
+        numeroPedido:
+          `PED-${boleta.id}`,
+
+        boletaId:
+          boleta.id,
+
+        usuarioId:
+          user.id,
+
+        nombre:
+          form.nombre,
+
+        email:
+          form.email,
+
+        telefono:
+          form.telefono,
+
+        direccion:
+          form.direccion,
+
+        descripcion:
+          form.descripcion,
+
+        region:
+          form.region,
+
+        comuna:
+          form.comuna,
+
+        codigoPostal:
+          form.codigoPostal,
+
+        fechaEntrega:
+          form.fechaEntrega,
+
+        medioPago:
+          form.medioPago,
+
+        productos:
+          cart,
+
+        neto:
+          Math.round(neto),
+
+        iva:
+          Math.round(iva),
+
+        subtotal:
+          subtotal,
+
+        total:
+          Number(
+            boleta.total || subtotal
+          ),
+
+        estado:
+          boleta.estado ||
+          'Pedido recibido',
+
+        fecha:
+          boleta.fecha
+            ? new Date(
+                boleta.fecha
+              ).toLocaleString(
+                'es-CL'
+              )
+            : new Date()
+                .toLocaleString(
+                  'es-CL'
+                )
+      }
 
 
-    navigate('/compra-exitosa')
+      localStorage.setItem(
+        'ultimaCompra',
+        JSON.stringify(
+          pedido
+        )
+      )
+
+
+      clearCart()
+
+
+      navigate(
+        '/compra-exitosa'
+      )
+
+    } catch (error) {
+
+      console.error(
+        'Error al realizar compra:',
+        error
+      )
+
+
+      if (error.status === 403) {
+
+        setMessage(
+          '⚠️ Tu usuario no tiene permiso para realizar compras.'
+        )
+
+        return
+      }
+
+
+      if (error.status === 401) {
+
+        setMessage(
+          '⚠️ Tu sesión expiró. Inicia sesión nuevamente.'
+        )
+
+        return
+      }
+
+
+      setMessage(
+        '⚠️ No fue posible completar la compra. Revisa el stock de los productos e intenta nuevamente.'
+      )
+
+    } finally {
+
+      setProcessing(false)
+    }
   }
 
 
@@ -585,37 +692,49 @@ if (!paymentResult.success) {
 
               </div>
 
-        <div className="form-check mb-4">
 
-          <input
-            className="form-check-input"
-            type="checkbox"
-            id="simulateFailure"
-            checked={simulateFailure}
-            onChange={event =>
-              setSimulateFailure(
-                event.target.checked
-              )
-            }
-          />
+              {/* SIMULAR ERROR DE PAGO */}
 
-          <label
-            className="form-check-label"
-            htmlFor="simulateFailure"
-          >
-            Simular rechazo de pago
-            <span className="text-muted">
-              {' '}(solo para pruebas)
-            </span>
-          </label>
+              <div className="form-check mb-4">
 
-        </div>
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="simulateFailure"
+                  checked={simulateFailure}
+                  onChange={event =>
+                    setSimulateFailure(
+                      event.target.checked
+                    )
+                  }
+                />
+
+                <label
+                  className="form-check-label"
+                  htmlFor="simulateFailure"
+                >
+                  Simular rechazo de pago
+
+                  <span className="text-muted">
+                    {' '}
+                    (solo para pruebas)
+                  </span>
+
+                </label>
+
+              </div>
+
 
               <button
                 type="submit"
                 className="btn btn-dark w-100"
+                disabled={processing}
               >
-                Confirmar compra
+
+                {processing
+                  ? 'Procesando compra...'
+                  : 'Confirmar compra'}
+
               </button>
 
             </form>
@@ -625,7 +744,7 @@ if (!paymentResult.success) {
         </div>
 
 
-        {/* RESUMEN */}
+        {/* RESUMEN DEL PEDIDO */}
 
         <div className="col-lg-5">
 
@@ -646,21 +765,22 @@ if (!paymentResult.success) {
               >
 
                 <span>
+
                   {item.name}
                   {' '}
                   x{item.quantity}
+
                 </span>
 
                 <span>
 
                   $
-                  {
-                    (
-                      item.price *
-                      item.quantity
-                    )
-                      .toLocaleString('es-CL')
-                  }
+                  {(
+                    item.price *
+                    item.quantity
+                  ).toLocaleString(
+                    'es-CL'
+                  )}
 
                 </span>
 
@@ -681,9 +801,13 @@ if (!paymentResult.success) {
               </span>
 
               <strong>
+
                 $
                 {Math.round(neto)
-                  .toLocaleString('es-CL')}
+                  .toLocaleString(
+                    'es-CL'
+                  )}
+
               </strong>
 
             </div>
@@ -698,9 +822,13 @@ if (!paymentResult.success) {
               </span>
 
               <strong>
+
                 $
                 {Math.round(iva)
-                  .toLocaleString('es-CL')}
+                  .toLocaleString(
+                    'es-CL'
+                  )}
+
               </strong>
 
             </div>
@@ -726,7 +854,9 @@ if (!paymentResult.success) {
 
                 $
                 {subtotal
-                  .toLocaleString('es-CL')}
+                  .toLocaleString(
+                    'es-CL'
+                  )}
 
               </strong>
 

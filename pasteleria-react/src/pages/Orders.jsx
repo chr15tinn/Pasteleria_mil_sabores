@@ -1,44 +1,224 @@
-import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import {
+  useEffect,
+  useState
+} from 'react'
+
+import {
+  useNavigate
+} from 'react-router-dom'
+
+import {
+  apiRequest
+} from '../services/api'
+
 
 function Orders() {
 
-  const navigate = useNavigate()
-  const { user } = useAuth()
+  const navigate =
+    useNavigate()
 
-  const pedidos =
-    JSON.parse(
-      localStorage.getItem('pedidos')
-    ) || []
+  const [pedidos, setPedidos] =
+    useState([])
 
-  const pedidosUsuario =
-    user
-      ? pedidos.filter(
-          pedido =>
-            pedido.usuarioId === user.id ||
-            pedido.email === user.email
+  const [loading, setLoading] =
+    useState(true)
+
+  const [error, setError] =
+    useState('')
+
+
+  useEffect(() => {
+
+    async function cargarPedidos() {
+
+      try {
+
+        setLoading(true)
+        setError('')
+
+
+        const data =
+          await apiRequest(
+            '/boletas/mis-boletas'
+          )
+
+
+        const pedidosAdaptados =
+          data.map(pedido => ({
+
+            id:
+              pedido.id,
+
+            numeroPedido:
+              `PED-${pedido.id}`,
+
+            fecha:
+              pedido.fecha
+                ? new Date(
+                    pedido.fecha
+                  ).toLocaleString(
+                    'es-CL'
+                  )
+                : 'Sin fecha',
+
+            total:
+              Number(
+                pedido.total || 0
+              ),
+
+            estado:
+              pedido.estado ||
+              'Pedido recibido',
+
+            direccion:
+              pedido.direccion ||
+              'Sin dirección',
+
+            medioPago:
+              pedido.medioPago ||
+              'No registrado',
+
+            productos:
+              (pedido.productos || [])
+                .map(producto => ({
+
+                  id:
+                    producto.id,
+
+                  name:
+                    producto.nombre,
+
+                  quantity:
+                    Number(
+                      producto.cantidad || 0
+                    ),
+
+                  price:
+                    Number(
+                      producto.precio || 0
+                    ),
+
+                  subtotal:
+                    Number(
+                      producto.subtotal || 0
+                    )
+                }))
+          }))
+
+
+        setPedidos(
+          pedidosAdaptados
         )
-      : pedidos
+
+      } catch (error) {
+
+        console.error(
+          'Error al cargar pedidos:',
+          error
+        )
 
 
-  function verSeguimiento(pedido) {
+        if (
+          error.status === 401
+        ) {
+
+          setError(
+            'Tu sesión expiró. Inicia sesión nuevamente.'
+          )
+
+          return
+        }
+
+
+        if (
+          error.status === 403
+        ) {
+
+          setError(
+            'No tienes permiso para consultar tus pedidos.'
+          )
+
+          return
+        }
+
+
+        setError(
+          'No fue posible cargar tus pedidos.'
+        )
+
+      } finally {
+
+        setLoading(false)
+      }
+    }
+
+
+    cargarPedidos()
+
+  }, [])
+
+
+  function verSeguimiento(
+    pedido
+  ) {
 
     localStorage.setItem(
       'pedidoSeleccionado',
-      JSON.stringify(pedido)
+      JSON.stringify(
+        pedido
+      )
     )
 
-    navigate('/seguimiento')
+    navigate(
+      '/seguimiento'
+    )
   }
 
 
-  if (pedidosUsuario.length === 0) {
+  if (loading) {
 
     return (
+
+      <main className="container py-5">
+
+        <p className="text-center">
+          Cargando tus pedidos...
+        </p>
+
+      </main>
+    )
+  }
+
+
+  if (error) {
+
+    return (
+
+      <main className="container py-5">
+
+        <div className="alert alert-danger text-center">
+
+          {error}
+
+        </div>
+
+      </main>
+    )
+  }
+
+
+  if (
+    pedidos.length === 0
+  ) {
+
+    return (
+
       <main className="container py-5">
 
         <div className="alert alert-warning text-center">
+
           No tienes pedidos registrados.
+
         </div>
 
       </main>
@@ -47,6 +227,7 @@ function Orders() {
 
 
   return (
+
     <main className="container py-5">
 
       <h1
@@ -61,102 +242,145 @@ function Orders() {
 
       <div className="row g-4">
 
-        {[...pedidosUsuario]
-          .reverse()
-          .map(pedido => (
+        {pedidos.map(
+          pedido => (
 
-          <div
-            key={pedido.numeroPedido}
-            className="col-12"
-          >
+            <div
+              key={pedido.id}
+              className="col-12"
+            >
 
-            <div className="card shadow-sm">
+              <div className="card shadow-sm">
 
-              <div className="card-body">
+                <div className="card-body">
 
-                <div
-                  className="d-flex justify-content-between flex-wrap gap-2"
-                >
+                  <div
+                    className="d-flex justify-content-between flex-wrap gap-2"
+                  >
 
-                  <h5>
-                    Pedido {pedido.numeroPedido}
-                  </h5>
+                    <h5>
 
-                  <span className="badge bg-secondary">
-                    {pedido.estado}
-                  </span>
+                      Pedido{' '}
+                      {pedido.numeroPedido}
 
-                </div>
+                    </h5>
 
 
-                <hr />
+                    <span className="badge bg-secondary">
+
+                      {pedido.estado}
+
+                    </span>
+
+                  </div>
 
 
-                <p>
-                  <strong>Fecha:</strong>{' '}
-                  {pedido.fecha}
-                </p>
+                  <hr />
 
 
-                <p>
-                  <strong>Total:</strong>{' '}
-                  $
-                  {Number(
-                    pedido.total
-                  ).toLocaleString('es-CL')}
-                </p>
+                  <p>
+
+                    <strong>
+                      Fecha:
+                    </strong>{' '}
+
+                    {pedido.fecha}
+
+                  </p>
 
 
-                <p>
-                  <strong>Dirección:</strong>{' '}
-                  {pedido.direccion},
-                  {' '}
-                  {pedido.comuna},
-                  {' '}
-                  {pedido.region}
-                </p>
+                  <p>
+
+                    <strong>
+                      Total:
+                    </strong>{' '}
+
+                    $
+                    {pedido.total
+                      .toLocaleString(
+                        'es-CL'
+                      )}
+
+                  </p>
 
 
-                <p>
-                  <strong>
-                    Fecha de entrega:
-                  </strong>{' '}
-                  {pedido.fechaEntrega}
-                </p>
+                  <p>
+
+                    <strong>
+                      Dirección:
+                    </strong>{' '}
+
+                    {pedido.direccion}
+
+                  </p>
 
 
-                <h6>
-                  Productos:
-                </h6>
+                  <p>
+
+                    <strong>
+                      Medio de pago:
+                    </strong>{' '}
+
+                    {pedido.medioPago}
+
+                  </p>
 
 
-                <ul>
+                  <h6>
+                    Productos:
+                  </h6>
 
-                  {pedido.productos?.map(
-                    item => (
 
-                      <li key={item.id}>
-                        {item.name}
-                        {' '}
-                        x{item.quantity}
-                      </li>
+                  {pedido.productos.length === 0 ? (
 
-                    )
+                    <p className="text-muted">
+
+                      No existen productos
+                      asociados a este pedido.
+
+                    </p>
+
+                  ) : (
+
+                    <ul>
+
+                      {pedido.productos.map(
+                        item => (
+
+                          <li
+                            key={item.id}
+                          >
+
+                            {item.name}
+
+                            {' '}
+
+                            x{item.quantity}
+
+                          </li>
+
+                        )
+                      )}
+
+                    </ul>
+
                   )}
 
-                </ul>
 
+                  <div className="text-end">
 
-                <div className="text-end">
+                    <button
+                      className="btn btn-dark"
+                      onClick={() =>
+                        verSeguimiento(
+                          pedido
+                        )
+                      }
+                    >
+                      Ver seguimiento
+                    </button>
 
-                  <button
-                    className="btn btn-dark"
-                    onClick={() =>
-                      verSeguimiento(pedido)
-                    }
-                  >
-                    Ver seguimiento
-                  </button>
+                  </div>
 
                 </div>
 
@@ -164,9 +388,8 @@ function Orders() {
 
             </div>
 
-          </div>
-
-        ))}
+          )
+        )}
 
       </div>
 
